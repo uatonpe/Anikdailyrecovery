@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>दैनंदिन रिकवरी रेकॉर्ड तपशील</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      line-height: 1.6;
+    }
+
+    .container {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 800px;
+    }
+
+    h2 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 1.8em;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      border: 1px solid #dfe6e9;
+      padding: 12px 15px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #4CAF50; /* Green theme */
+      color: white;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+
+    tr:nth-child(even) td:not(.add-loan-cell) { /* Exclude add-loan-cell from striping if desired */
+      background-color: #f9f9f9;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #b2bec3;
+      border-radius: 4px;
+      font-size: 1em;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus {
+      border-color: #4CAF50;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    }
+
+    input[readonly] {
+      background-color: #e9ecef;
+      color: #495057;
+      cursor: not-allowed;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 1em;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+    
+    button:active {
+      background-color: #3e8e41;
+    }
+
+    .add-loan-cell {
+      text-align: right;
+      background-color: #fff !important; /* Override striping */
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .add-loan-btn {
+      background-color: #007bff; /* Blue for Add Loan */
+      min-width: 120px;
+    }
+    .add-loan-btn:hover {
+      background-color: #0069d9;
+    }
+    
+    .print-btn {
+      display: block;
+      width: fit-content;
+      margin: 25px auto 0 auto;
+      background-color: #5bc0de; /* Info blue for Print */
+      min-width: 120px;
+    }
+    .print-btn:hover {
+      background-color: #31b0d5;
+    }
+
+    /* Specific styling for the loan sub-table headers */
+    #loanTable th {
+        background-color: #6c757d; /* A muted color for sub-headers */
+        font-size: 0.95em;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>अनिक फायनान्सीयल सर्वीसेस — दैनंदिन रिकवरी रेकॉर्ड तपशील</h2>
+
+    <table>
+      <tr>
+        <th colspan="2">स्टाफचे नांव</th>
+      </tr>
+      <tr>
+        <td colspan="2"><input type="text" id="staffName"></td>
+      </tr>
+      <tr>
+        <th colspan="2">दिनांक</th>
+      </tr>
+      <tr>
+        <td colspan="2"><input type="date" id="reportDate"></td>
+      </tr>
+    </table>
+
+    <form id="recoveryForm">
+      <table>
+        <tr>
+          <th>तपशील</th>
+          <th>रक्कम (₹)</th>
+        </tr>
+        <tr>
+          <td>आजची एकूण ऑनलाइन रिकवरी (A)</td>
+          <td><input type="number" id="onlineRecovery" oninput="calculateTotals()" placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>आजची एकूण ऑफलाईन रिकवरी (B) Total</td>
+          <td><input type="number" id="offlineRecoveryTotal" readonly placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td colspan="2" style="padding: 0; border: none;"> <!-- Remove padding for seamless nested table -->
+            <table id="loanTable" style="margin-bottom: 0;"> <!-- Remove margin for seamless nested table -->
+              <tr>
+                <th>कर्ज क्र. (Loan No)</th>
+                <th>रक्कम (Amount)</th>
+              </tr>
+              <tr>
+                <td><input type="text" class="loanNo"></td>
+                <td><input type="number" class="loanAmount" oninput="calculateOfflineRecovery()" placeholder="0.00" /></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="add-loan-cell">
+                <button type="button" onclick="addLoanRow()" class="add-loan-btn">Add Loan</button>
+            </td>
+        </tr>
+        <tr>
+          <td>एकुण रक्कम (C = A+B)</td>
+          <td><input type="number" id="totalRecovery" readonly placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>प्रारंभीची शिल्लक रक्कम (D)</td>
+          <td><input type="number" id="openingAmount" oninput="calculateTotals()" placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>प्रांरभीची शिल्लक व रिकवरी यांची टोटल (E = C+D)</td>
+          <td><input type="number" id="totalAmount" readonly placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <th colspan="2">वरील रक्कमेची फोड</th>
+        </tr>
+        <tr>
+          <td>स्टेट बॅंकेत भरणा (A)</td>
+          <td><input type="number" id="sbiAmount" oninput="calculateTotals()" placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>महा ग्रामीणमध्ये भरणा (B)</td>
+          <td><input type="number" id="mgbAmount" oninput="calculateTotals()" placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>फोनपे QR (C)</td>
+          <td><input type="number" id="phonePayAmount" oninput="calculateTotals()" placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>अन्य बॅंक (D)</td>
+          <td><input type="number" id="otherBankAmount" oninput="calculateTotals()" placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>वरीष्ठांकडे जमा (E)</td>
+          <td><input type="number" id="cashsr" oninput="calculateTotals()" placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>ऑफिस मध्ये जमा (F)</td>
+          <td><input type="number" id="officeAmount" oninput="calculateTotals()" placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>हातावर शिल्लक (G)</td>
+          <td><input type="number" id="cashInHandAmount" oninput="calculateTotals()" placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>एकुण फोड (A+B+C+D+E+F+G)</td>
+          <td><input type="number" id="totalBreakdown" readonly placeholder="0.00" /></td>
+        </tr>
+        <tr>
+          <td>तफावत (E - एकुण फोड)</td>
+          <td><input type="number" id="difference" readonly placeholder="0.00" /></td>
+        </tr>
+      </table>
+      <button type="button" onclick="window.print()" class="print-btn">Print</button>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set default date to today
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('reportDate').value = today;
+      } catch (e) {
+        console.error("Could not set today's date:", e);
+      }
+      
+      // Initialize calculations on page load
+      calculateOfflineRecovery(); // This will also call calculateTotals()
+    });
+
+    function addLoanRow() {
+      const loanTable = document.getElementById("loanTable").getElementsByTagName('tbody')[0] || document.getElementById("loanTable"); // Handles if tbody is implicit or explicit
+      const newRow = loanTable.insertRow(-1); // Inserts a row at the end of the table
+
+      const cell1 = newRow.insertCell(0);
+      const cell2 = newRow.insertCell(1);
+
+      cell1.innerHTML = '<input type="text" class="loanNo">';
+      cell2.innerHTML = '<input type="number" class="loanAmount" oninput="calculateOfflineRecovery()" placeholder="0.00" />';
+      
+      // Optional: if you want to recalculate immediately even with empty new row.
+      // calculateOfflineRecovery(); 
+    }
+
+    function calculateOfflineRecovery() {
+      const loanAmountInputs = document.getElementsByClassName("loanAmount");
+      let totalOfflineRecovery = 0;
+
+      for (let i = 0; i < loanAmountInputs.length; i++) {
+        const amount = parseFloat(loanAmountInputs[i].value);
+        if (!isNaN(amount)) {
+          totalOfflineRecovery += amount;
+        }
+      }
+      
+      const offlineRecoveryTotalInput = document.getElementById("offlineRecoveryTotal");
+      if (offlineRecoveryTotalInput) {
+          offlineRecoveryTotalInput.value = totalOfflineRecovery.toFixed(2);
+      }
+      calculateTotals(); // CRITICAL: This ensures C (Total Recovery) is updated when B (Offline Recovery) changes.
+    }
+
+    function calculateTotals() {
+      const onlineRecovery = parseFloat(document.getElementById("onlineRecovery").value) || 0;
+      const offlineRecovery = parseFloat(document.getElementById("offlineRecoveryTotal").value) || 0;
+      const openingAmount = parseFloat(document.getElementById("openingAmount").value) || 0;
+      
+      const sbiAmount = parseFloat(document.getElementById("sbiAmount").value) || 0;
+      const mgbAmount = parseFloat(document.getElementById("mgbAmount").value) || 0;
+      const phonePayAmount = parseFloat(document.getElementById("phonePayAmount").value) || 0;
+      const otherBankAmount = parseFloat(document.getElementById("otherBankAmount").value) || 0;
+      const cashsr = parseFloat(document.getElementById("cashsr").value) || 0; // वरीष्ठांकडे जमा
+      const officeAmount = parseFloat(document.getElementById("officeAmount").value) || 0;
+      const cashInHandAmount = parseFloat(document.getElementById("cashInHandAmount").value) || 0;
+
+      const totalRecovery = onlineRecovery + offlineRecovery; // C = A + B
+      const totalAmount = openingAmount + totalRecovery; // E = C + D (Praarambhichi shillak + Total Recovery)
+      
+      const totalBreakdown = sbiAmount + mgbAmount + phonePayAmount + otherBankAmount + cashsr + officeAmount + cashInHandAmount;
+      const difference = totalAmount - totalBreakdown;
+
+      document.getElementById("totalRecovery").value = totalRecovery.toFixed(2);
+      document.getElementById("totalAmount").value = totalAmount.toFixed(2);
+      document.getElementById("totalBreakdown").value = totalBreakdown.toFixed(2);
+      document.getElementById("difference").value = difference.toFixed(2);
+    }
+  </script>
+</body>
+</html>
