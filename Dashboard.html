@@ -264,7 +264,7 @@
         const latestEntries = {};
         const relevantData = fullData.filter(row => row['दिनांक'] && new Date(row['दिनांक']) <= new Date(targetDate));
         for (const row of relevantData) {
-            const staffName = row['स्टाफचे नांव']; // CORRECTED SPELLING WITH CHANDRABINDU
+            const staffName = row['स्टाफचे नांव'];
             if (!staffName) continue;
             if (!latestEntries[staffName] || (new Date(row['दिनांक']).getTime() === new Date(latestEntries[staffName]['दिनांक']).getTime() && new Date(row['Timestamp']).getTime() > new Date(latestEntries[staffName]['Timestamp']).getTime()) || new Date(row['दिनांक']) > new Date(latestEntries[staffName]['दिनांक'])) {
                  latestEntries[staffName] = row;
@@ -313,12 +313,25 @@
         let totalCashInHand = (unit === 'संपूर्ण' ? latestData : latestData.filter(row => row['युनिट'] === unit))
                                 .reduce((sum, row) => sum + safeParseFloat(row['हातावर शिल्लक']), 0);
 
+        // नवीन कार्डसाठी गणना
+        const phonePeQrTotal = dailyData.reduce((s, r) => s + safeParseFloat(r['फोनपे QR']), 0);
+        const phonePeQrPercentage = totalRecovery > 0 ? (phonePeQrTotal / totalRecovery) * 100 : 0;
+        const formattedPercentage = phonePeQrPercentage.toFixed(1); // दशांश नंतर एक अंक
+
         document.getElementById('kpiCards').innerHTML = `
             <div class="kpi-card clickable" onclick="showDetailsPopup('daily', 'एकूण रिकवरी (आजची)')"><div class="icon" style="color:#005A9C; background:#eaf2f8;">💰</div><div class="text"><h3>एकूण रिकवरी (आजची)</h3><p>${formatCurrency(totalRecovery)}</p></div></div>
             <div class="kpi-card clickable" onclick="showDetailsPopup('dailyOnline', 'ऑनलाइन रिकवरी (आजची)')"><div class="icon" style="color:var(--online-color); background:#eaf2f8;">📱</div><div class="text"><h3>ऑनलाइन रिकवरी</h3><p>${formatCurrency(onlineRecovery)}</p></div></div>
             <div class="kpi-card clickable" onclick="showDetailsPopup('dailyOffline', 'ऑफलाइन रिकवरी (आजची)')"><div class="icon" style="color:var(--secondary-color); background:#e8f8f5;">🏦</div><div class="text"><h3>ऑफलाइन रिकवरी</h3><p>${formatCurrency(offlineRecovery)}</p></div></div>
             <div class="kpi-card clickable" onclick="showDetailsPopup('highBalance', 'जास्त शिल्लक कर्मचारी')"><div class="icon" style="color:var(--highlight-color); background:#fdebd0;">⚠️</div><div class="text"><h3>जास्त शिल्लक कर्मचारी</h3><p>${highBalanceCount}</p></div></div>
-            <div class="kpi-card clickable" onclick="showDetailsPopup('totalCash', 'एकूण हातावर शिल्लक')"><div class="icon" style="color:#28a745; background:#e8f5e9;">💵</div><div class="text"><h3>एकूण हातावर शिल्लक</h3><p>${formatCurrency(totalCashInHand)}</p></div></div>`;
+            <div class="kpi-card clickable" onclick="showDetailsPopup('totalCash', 'एकूण हातावर शिल्लक')"><div class="icon" style="color:#28a745; background:#e8f5e9;">💵</div><div class="text"><h3>एकूण हातावर शिल्लक</h3><p>${formatCurrency(totalCashInHand)}</p></div></div>
+            <!-- नवीन कार्ड: QR फोनपे ने जमा -->
+            <div class="kpi-card clickable" onclick="showDetailsPopup('phonePeQr', 'QR फोनपे ने जमा')">
+                <div class="icon" style="color:#8E44AD; background:#f5eef8;">📲</div>
+                <div class="text">
+                    <h3>QR फोनपे ने जमा</h3>
+                    <p>${formatCurrency(phonePeQrTotal)} <span style="font-size: 1.4rem; color: #555;">(${formattedPercentage}%)</span></p>
+                </div>
+            </div>`;
     }
 
     function showDetailsPopup(dataType, title) {
@@ -329,7 +342,7 @@
         modalTitle.textContent = title;
         
         let data, columns, sortKey;
-        const staffNameKey = 'स्टाफचे नांव'; // CORRECTED
+        const staffNameKey = 'स्टाफचे नांव';
 
         switch (dataType) {
             case 'daily':
@@ -357,6 +370,12 @@
                 columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'हातावर शिल्लक', header: 'हातावर शिल्लक'}];
                 sortKey = 'हातावर शिल्लक';
                 break;
+            // नवीन कार्डसाठी Popup Logic
+            case 'phonePeQr':
+                data = currentFilteredData.daily.filter(r => safeParseFloat(r['फोनपे QR']) > 0);
+                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'फोनपे QR', header: 'फोनपे QR जमा'}];
+                sortKey = 'फोनपे QR';
+                break;
             default:
                 modalBody.innerHTML = '<p>डेटा उपलब्ध नाही.</p>';
                 modal.style.display = "block";
@@ -376,7 +395,6 @@
                 tableHTML += '<tr>';
                 columns.forEach(col => {
                     const value = row[col.key];
-                    // **IMPROVED LOGIC**: Only format if it's not the staff name column
                     if (col.key !== staffNameKey) {
                         tableHTML += `<td>${formatCurrency(value)}</td>`;
                     } else {
@@ -402,14 +420,14 @@
         let filteredHighBalance = highBalanceData;
         if (unit !== 'संपूर्ण') { filteredHighBalance = highBalanceData.filter(row => row['युनिट'] === unit); }
         const table = document.getElementById('highBalanceTable');
-        let headerHtml = (unit === 'संपूर्ण') ? '<th>स्टाफचे नांव</th><th>युनिट</th><th>हातावर शिल्लक (₹)</th><th>शेवटचा रिपोर्ट</th>' : '<th>स्टाफचे नांव</th><th>हातावर शिल्लक (₹)</th><th>शेवटचा रिपोर्ट दिनांक</th>'; // CORRECTED
+        let headerHtml = (unit === 'संपूर्ण') ? '<th>स्टाफचे नांव</th><th>युनिट</th><th>हातावर शिल्लक (₹)</th><th>शेवटचा रिपोर्ट</th>' : '<th>स्टाफचे नांव</th><th>हातावर शिल्लक (₹)</th><th>शेवटचा रिपोर्ट दिनांक</th>';
         let bodyHtml = '';
         if (filteredHighBalance.length === 0) {
             const colspan = (unit === 'संपूर्ण') ? 4 : 3;
             bodyHtml = `<tr><td colspan="${colspan}" style="text-align:center;">या युनिटमध्ये कोणीही जास्त शिल्लक असलेला कर्मचारी नाही.</td></tr>`;
         } else {
             filteredHighBalance.sort((a,b) => safeParseFloat(b['हातावर शिल्लक']) - safeParseFloat(a['हातावर शिल्लक'])).forEach(row => {
-                bodyHtml += `<tr class="highlight-row"><td>${row['स्टाफचे नांव']}</td>`; // CORRECTED
+                bodyHtml += `<tr class="highlight-row"><td>${row['स्टाफचे नांव']}</td>`;
                 if (unit === 'संपूर्ण') bodyHtml += `<td>${row['युनिट']}</td>`;
                 bodyHtml += `<td>${formatCurrency(row['हातावर शिल्लक'])}</td><td>${new Date(row['दिनांक']).toLocaleDateString('en-GB')}</td></tr>`;
             });
@@ -420,7 +438,7 @@
     function renderDetailedReportTable(data) {
         const table = document.getElementById('fullReportTable');
         const displayColumns = [
-            { header: 'Staff Name', key: 'स्टाफचे नांव' }, // CORRECTED
+            { header: 'Staff Name', key: 'स्टाफचे नांव' },
             { header: 'Opening Bal', key: 'प्रारंभीची शिल्लक' },
             { header: 'Online Reco', key: 'ऑनलाइन रिकवरी' },
             { header: 'Offline Reco', key: 'ऑफलाईन रिकवरी' },
@@ -490,11 +508,11 @@
         const highBalanceInUnit = highBalanceStaff.filter(s => activeUnit === 'संपूर्ण' || s.युनिट === activeUnit);
         if(highBalanceInUnit.length > 0) {
             const highestBalanceStaff = highBalanceInUnit.reduce((max, staff) => safeParseFloat(max['हातावर शिल्लक']) > safeParseFloat(staff['हातावर शिल्लक']) ? max : staff);
-            insightsList.innerHTML += `<li>या तारखेपर्यंत, <strong>${highBalanceInUnit.length}</strong> कर्मचाऱ्यांकडे ३००० पेक्षा जास्त शिल्लक आहे. सर्वाधिक शिल्लक <strong>${highestBalanceStaff['स्टाफचे नांव']}</strong> यांच्याकडे (${formatCurrency(highestBalanceStaff['हातावर शिल्लक'])}) आहे.</li>`; // CORRECTED
+            insightsList.innerHTML += `<li>या तारखेपर्यंत, <strong>${highBalanceInUnit.length}</strong> कर्मचाऱ्यांकडे ३००० पेक्षा जास्त शिल्लक आहे. सर्वाधिक शिल्लक <strong>${highestBalanceStaff['स्टाफचे नांव']}</strong> यांच्याकडे (${formatCurrency(highestBalanceStaff['हातावर शिल्लक'])}) आहे.</li>`;
         } else { insightsList.innerHTML += `<li>उत्कृष्ट! या तारखेपर्यंत कोणत्याही कर्मचाऱ्याकडे ३००० पेक्षा जास्त शिल्लक नाही.</li>`; }
         if(dailyData.length > 0) {
             const highestRecoveryStaff = dailyData.reduce((max, staff) => (safeParseFloat(max['एकूण रिकवरी']) || 0) > (safeParseFloat(staff['एकूण रिकवरी']) || 0) ? max : staff, dailyData[0]);
-            if (safeParseFloat(highestRecoveryStaff['एकूण रिकवरी']) > 0) { insightsList.innerHTML += `<li>आजच्या दिवशी सर्वाधिक रिकवरी <strong>${highestRecoveryStaff['स्टाफचे नांव']}</strong> यांनी केली आहे (${formatCurrency(highestRecoveryStaff['एकूण रिकवरी'])}).</li>`; } // CORRECTED
+            if (safeParseFloat(highestRecoveryStaff['एकूण रिकवरी']) > 0) { insightsList.innerHTML += `<li>आजच्या दिवशी सर्वाधिक रिकवरी <strong>${highestRecoveryStaff['स्टाफचे नांव']}</strong> यांनी केली आहे (${formatCurrency(highestRecoveryStaff['एकूण रिकवरी'])}).</li>`; }
             else { insightsList.innerHTML += `<li>आजच्या दिवशी कोणत्याही स्टाफने रिकवरी रिपोर्ट केलेली नाही.</li>`; }
         } else { insightsList.innerHTML += `<li>निवडलेल्या तारखेसाठी कोणताही तपशीलवार रिपोर्ट उपलब्ध नाही.</li>`; }
         document.getElementById('managerialInsights').innerHTML = `<h2>व्यवस्थापकांसाठी महत्त्वाची निरीक्षणे</h2>`;
@@ -510,8 +528,8 @@
         } else {
             staffWithCash.sort((a, b) => safeParseFloat(b['हातावर शिल्लक']) - safeParseFloat(a['हातावर शिल्लक']));
             const top5Staff = staffWithCash.slice(0, 5);
-            const chartData = [['स्टाफचे नांव', 'हातावर शिल्लक', { role: 'style' }]]; // CORRECTED
-            top5Staff.forEach(staff => { chartData.push([staff['स्टाफचे नांव'], safeParseFloat(staff['हातावर शिल्लक']), '#e74c3c']); }); // CORRECTED
+            const chartData = [['स्टाफचे नांव', 'हातावर शिल्लक', { role: 'style' }]];
+            top5Staff.forEach(staff => { chartData.push([staff['स्टाफचे नांव'], safeParseFloat(staff['हातावर शिल्लक']), '#e74c3c']); });
             const dataTable = google.visualization.arrayToDataTable(chartData);
             const options = { title: `सर्वाधिक शिल्लक असलेले स्टाफ (दि. ${new Date(document.getElementById('dateFilter').value).toLocaleDateString('en-GB')} रोजी)`, legend: { position: 'none' }, hAxis: { title: 'रक्कम (₹)' } };
             new google.visualization.BarChart(topCashChartDiv).draw(dataTable, options);
