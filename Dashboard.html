@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="mr">
 <head>
@@ -309,14 +310,17 @@
         const offlineRecovery = dailyData.reduce((s, r) => s + safeParseFloat(r['ऑफलाईन रिकवरी']), 0);
         const totalRecovery = onlineRecovery + offlineRecovery;
         const highBalanceCount = (unit === 'संपूर्ण' ? highBalanceStaff : highBalanceStaff.filter(s => s.युनिट === unit)).length;
-
+        
         let totalCashInHand = (unit === 'संपूर्ण' ? latestData : latestData.filter(row => row['युनिट'] === unit))
                                 .reduce((sum, row) => sum + safeParseFloat(row['हातावर शिल्लक']), 0);
 
-        // नवीन कार्डसाठी गणना
         const phonePeQrTotal = dailyData.reduce((s, r) => s + safeParseFloat(r['फोनपे QR']), 0);
         const phonePeQrPercentage = totalRecovery > 0 ? (phonePeQrTotal / totalRecovery) * 100 : 0;
-        const formattedPercentage = phonePeQrPercentage.toFixed(1); // दशांश नंतर एक अंक
+        const formattedPercentage = phonePeQrPercentage.toFixed(1);
+
+        // **नवीन कार्ड्ससाठी गणना**
+        const officeDepositTotal = dailyData.reduce((s, r) => s + safeParseFloat(r['ऑफिस मध्ये जमा']), 0);
+        const seniorDepositTotal = dailyData.reduce((s, r) => s + safeParseFloat(r['वरीष्ठांकडे जमा']), 0);
 
         document.getElementById('kpiCards').innerHTML = `
             <div class="kpi-card clickable" onclick="showDetailsPopup('daily', 'एकूण रिकवरी (आजची)')"><div class="icon" style="color:#005A9C; background:#eaf2f8;">💰</div><div class="text"><h3>एकूण रिकवरी (आजची)</h3><p>${formatCurrency(totalRecovery)}</p></div></div>
@@ -324,12 +328,27 @@
             <div class="kpi-card clickable" onclick="showDetailsPopup('dailyOffline', 'ऑफलाइन रिकवरी (आजची)')"><div class="icon" style="color:var(--secondary-color); background:#e8f8f5;">🏦</div><div class="text"><h3>ऑफलाइन रिकवरी</h3><p>${formatCurrency(offlineRecovery)}</p></div></div>
             <div class="kpi-card clickable" onclick="showDetailsPopup('highBalance', 'जास्त शिल्लक कर्मचारी')"><div class="icon" style="color:var(--highlight-color); background:#fdebd0;">⚠️</div><div class="text"><h3>जास्त शिल्लक कर्मचारी</h3><p>${highBalanceCount}</p></div></div>
             <div class="kpi-card clickable" onclick="showDetailsPopup('totalCash', 'एकूण हातावर शिल्लक')"><div class="icon" style="color:#28a745; background:#e8f5e9;">💵</div><div class="text"><h3>एकूण हातावर शिल्लक</h3><p>${formatCurrency(totalCashInHand)}</p></div></div>
-            <!-- नवीन कार्ड: QR फोनपे ने जमा -->
             <div class="kpi-card clickable" onclick="showDetailsPopup('phonePeQr', 'QR फोनपे ने जमा')">
                 <div class="icon" style="color:#8E44AD; background:#f5eef8;">📲</div>
                 <div class="text">
                     <h3>QR फोनपे ने जमा</h3>
                     <p>${formatCurrency(phonePeQrTotal)} <span style="font-size: 1.4rem; color: #555;">(${formattedPercentage}%)</span></p>
+                </div>
+            </div>
+            <!-- **नवीन कार्ड: ऑफिस मध्ये जमा** -->
+            <div class="kpi-card clickable" onclick="showDetailsPopup('officeDeposit', 'ऑफिस मध्ये जमा')">
+                <div class="icon" style="color:#17A2B8; background:#e8f6f8;">🏢</div>
+                <div class="text">
+                    <h3>ऑफिस मध्ये जमा</h3>
+                    <p>${formatCurrency(officeDepositTotal)}</p>
+                </div>
+            </div>
+            <!-- **नवीन कार्ड: वरिष्ठांकडे जमा** -->
+            <div class="kpi-card clickable" onclick="showDetailsPopup('seniorDeposit', 'वरीष्ठांकडे जमा')">
+                <div class="icon" style="color:#6C757D; background:#f0f1f2;">👨‍💼</div>
+                <div class="text">
+                    <h3>वरीष्ठांकडे जमा</h3>
+                    <p>${formatCurrency(seniorDepositTotal)}</p>
                 </div>
             </div>`;
     }
@@ -370,11 +389,21 @@
                 columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'हातावर शिल्लक', header: 'हातावर शिल्लक'}];
                 sortKey = 'हातावर शिल्लक';
                 break;
-            // नवीन कार्डसाठी Popup Logic
             case 'phonePeQr':
                 data = currentFilteredData.daily.filter(r => safeParseFloat(r['फोनपे QR']) > 0);
                 columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'फोनपे QR', header: 'फोनपे QR जमा'}];
                 sortKey = 'फोनपे QR';
+                break;
+            // **नवीन कार्ड्ससाठी Popup Logic**
+            case 'officeDeposit':
+                data = currentFilteredData.daily.filter(r => safeParseFloat(r['ऑफिस मध्ये जमा']) > 0);
+                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'ऑफिस मध्ये जमा', header: 'ऑफिस मध्ये जमा'}];
+                sortKey = 'ऑफिस मध्ये जमा';
+                break;
+            case 'seniorDeposit':
+                data = currentFilteredData.daily.filter(r => safeParseFloat(r['वरीष्ठांकडे जमा']) > 0);
+                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'वरीष्ठांकडे जमा', header: 'वरीष्ठांकडे जमा'}];
+                sortKey = 'वरीष्ठांकडे जमा';
                 break;
             default:
                 modalBody.innerHTML = '<p>डेटा उपलब्ध नाही.</p>';
