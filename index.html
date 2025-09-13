@@ -136,7 +136,7 @@
   </main>
   
   <script>
- const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzsiLcDwscTAdmgKszLVjYfKOoj-GLisdLSIX-4kfvweB_JIwkkygVznGN6JEDgHPw/exec";
+ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbynDdxBV_2MdsTNMdFJvWGC9sXZXUn0QtgCh_RbN_jD1Sb4QoX58v1w7IGRRz8Bots/exec";
     const API_KEY = "AIzaSyAQQZz2KDKZtJw7YZBRAvHaO-Uy68Ps57s";
     const SHEET_ID = "1FJQ7fd__PRnHTDjfvOPWSwGo2_w-S-4sx1mcpRTVskk";
     const STAFF_SHEET_NAME = "StaffList";
@@ -244,4 +244,5 @@
     function calculateAllTotals() { const offlineRecovery = Array.from(document.querySelectorAll('#loanTable tbody input[type=number]')).reduce((sum, el) => sum + (parseFloat(el.value) || 0), 0); document.getElementById('offlineRecoveryTotal').value = offlineRecovery.toFixed(2); const onlineRecovery = getFloatValue("onlineRecovery"); const openingAmount = getFloatValue("openingAmount"); const totalRecovery = onlineRecovery + offlineRecovery; const totalAmount = openingAmount + totalRecovery; document.getElementById('totalRecovery').value = totalRecovery.toFixed(2); document.getElementById('totalAmount').value = totalAmount.toFixed(2); const breakdownTotal = ['sbiAmount', 'mgbAmount', 'phonePayAmount', 'otherBankAmount', 'cashsr', 'officeAmount', 'cashInHandAmount'].reduce((sum, id) => sum + getFloatValue(id), 0); document.getElementById('totalBreakdown').value = breakdownTotal.toFixed(2); document.getElementById('difference').value = (totalAmount - breakdownTotal).toFixed(2); }
   </script>
 </body>
+
 </html>
