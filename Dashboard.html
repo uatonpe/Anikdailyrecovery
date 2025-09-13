@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="mr">
 <head>
@@ -10,10 +9,12 @@
     <style>
         :root {
             --primary-color: #005A9C;
-            --secondary-color: #1E8449; /* Green for Offline */
-            --online-color: #3498DB; /* Blue for Online */
+            --secondary-color: #1E8449;
+            --online-color: #3498DB;
             --highlight-color: #D35400;
             --danger-color: #C0392B;
+            --success-color: #28a745;
+            --pending-color: #f39c12;
             --bg-color: #f4f7fc;
             --card-bg-color: #ffffff;
             --text-color: #34495e;
@@ -35,17 +36,7 @@
         .controls { background: var(--card-bg-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
         .controls label { font-weight: 600; font-size: 1.1rem; color: var(--heading-color); }
         .controls input[type="date"] { padding: 0.7rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; }
-        .refresh-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background-color 0.2s;
-        }
+        .refresh-btn { background-color: var(--primary-color); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background-color 0.2s; }
         .refresh-btn:hover { background-color: #004a80; }
         .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 2rem; }
         .tab-link { padding: 0.8rem 1.5rem; cursor: pointer; font-weight: 600; font-size: 1.1rem; border: none; background-color: transparent; border-bottom: 4px solid transparent; transition: all 0.3s ease; color: var(--text-color); }
@@ -55,7 +46,7 @@
         .kpi-card { display: flex; align-items: center; gap: 1.5rem; background: var(--card-bg-color); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .kpi-card.clickable { cursor: pointer; }
         .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 90, 156, 0.15); }
-        .kpi-card .icon { font-size: 2.5rem; padding: 1rem; border-radius: 50%; display: grid; place-items: center; }
+        .kpi-card .icon { font-size: 2.5rem; width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
         .kpi-card .text h3 { margin: 0 0 0.4rem; font-size: 1rem; color: #555; font-weight: 500; }
         .kpi-card .text p { margin: 0; font-size: 2.1rem; font-weight: 700; color: var(--heading-color); }
         .insights-card { background: linear-gradient(135deg, #eaf2f8, #e4ecf7); border: 1px solid #aed6f1; padding: 1.5rem; border-radius: var(--border-radius); }
@@ -73,79 +64,27 @@
         tfoot tr { background-color: #eaf2f8; font-weight: bold; font-size: 1.1rem; }
         .highlight-row { background-color: #feefea !important; font-weight: 600; color: var(--danger-color); }
         .loader { text-align: center; font-size: 1.2rem; padding: 2rem; color: var(--primary-color); }
-
         #fullReportTable { font-size: 0.95rem; }
-        #fullReportTable th, 
-        #fullReportTable td { padding: 0.8rem 0.7rem; }
-        
-        .delete-btn {
-            background-color: var(--danger-color);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.2s;
+        #fullReportTable th, #fullReportTable td { padding: 0.8rem 0.7rem; }
+        #fullReportTable select, #fullReportTable input[type="text"] {
+            font-family: 'Noto Sans Devanagari', sans-serif; font-size: 0.9rem; padding: 4px; border-radius: 4px; border: 1px solid #ccc; width: 95%; box-sizing: border-box;
         }
+        #fullReportTable input[type="text"] { min-width: 150px; }
+        #fullReportTable input[type="text"]:disabled { background-color: #f1f1f1; cursor: not-allowed; }
+        .delete-btn { background-color: var(--danger-color); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background-color 0.2s; }
         .delete-btn:hover { background-color: #922b21; }
-
-        /* Modal Styles */
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0;
-            top: 0;
-            width: 100%; 
-            height: 100%; 
-            overflow: auto; 
-            background-color: rgba(0,0,0,0.5);
-            animation: fadeIn 0.3s;
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 10% auto;
-            padding: 25px;
-            border: 1px solid var(--border-color);
-            width: 90%;
-            max-width: 700px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            animation: slideIn 0.4s;
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 1rem;
-            margin-bottom: 1rem;
-        }
-        .modal-header h2 {
-            margin: 0;
-            color: var(--primary-color);
-        }
-        .close-button {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .close-button:hover,
-        .close-button:focus {
-            color: black;
-            text-decoration: none;
-        }
-        .modal-body {
-             max-height: 60vh;
-             overflow-y: auto;
-        }
-        .modal-body table { font-size: 1rem; }
-
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); animation: fadeIn 0.3s; }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 25px; border: 1px solid var(--border-color); width: 90%; max-width: 700px; border-radius: var(--border-radius); box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideIn 0.4s; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .modal-header h2 { margin: 0; color: var(--primary-color); }
+        .close-button { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-button:hover, .close-button:focus { color: black; text-decoration: none; }
+        .modal-body { max-height: 60vh; overflow-y: auto; }
+        .modal-body table { font-size: 1rem; white-space: normal; }
         @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
         @keyframes slideIn { from {transform: translateY(-50px);} to {transform: translateY(0);} }
-
+        .status-update-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,.2); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite; margin-left: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -160,16 +99,10 @@
     <div id="dashboard-content"></div>
 </main>
 
-<!-- The Modal -->
 <div id="detailsModal" class="modal">
     <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modalTitle">तपशील</h2>
-            <span class="close-button">&times;</span>
-        </div>
-        <div class="modal-body" id="modalBody">
-            <!-- Dynamic content will be injected here -->
-        </div>
+        <div class="modal-header"><h2 id="modalTitle">तपशील</h2><span class="close-button">&times;</span></div>
+        <div class="modal-body" id="modalBody"></div>
     </div>
 </div>
 
@@ -178,54 +111,35 @@
     const API_KEY = "AIzaSyAQQZz2KDKZtJw7YZBRAvHaO-Uy68Ps57s";
     const STAFF_SHEET_NAME = "StaffList";
     const REPORTS_SHEET_NAME = "Recovery Data";
-    
-    // **येथे तुमची वेब ॲप URL पेस्ट करा**
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzsiLcDwscTAdmgKszLVjYfKOoj-GLisdLSIX-4kfvweB_JIwkkygVznGN6JEDgHPw/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbynDdxBV_2MdsTNMdFJvWGC9sXZXUn0QtgCh_RbN_jD1Sb4QoX58v1w7IGRRz8Bots/exec";
 
     google.charts.load('current', {'packages':['corechart']});
 
     let fullData = [];
     let staffList = [];
     let activeUnit = 'संपूर्ण';
-    let currentFilteredData = {
-        daily: [],
-        highBalance: [],
-        totalCash: []
-    };
+    let currentFilteredData = { daily: [], highBalance: [], totalCash: [] };
     
     const safeParseFloat = (str) => parseFloat(String(str).replace(/,/g, '')) || 0;
-
-    const formatCurrency = (val) => new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }).format(safeParseFloat(val));
+    const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(safeParseFloat(val));
 
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('dateFilter').value = new Date().toISOString().split('T')[0];
         document.getElementById('dateFilter').addEventListener('change', () => renderDashboard(activeUnit));
-        
         const modal = document.getElementById('detailsModal');
         const closeBtn = document.querySelector('.close-button');
         closeBtn.onclick = () => modal.style.display = "none";
-        window.onclick = (event) => {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        };
-        
+        window.onclick = (event) => { if (event.target == modal) { modal.style.display = "none"; } };
         google.charts.setOnLoadCallback(loadDashboardData);
     });
 
     async function loadDashboardData() {
-        const contentArea = document.getElementById('dashboard-content');
-        contentArea.innerHTML = '<div class="loader">डेटा लोड होत आहे, कृपया प्रतीक्षा करा...</div>';
+        document.getElementById('dashboard-content').innerHTML = '<div class="loader">डेटा लोड होत आहे, कृपया प्रतीक्षा करा...</div>';
         try {
             const reportsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/'${REPORTS_SHEET_NAME}'?key=${API_KEY}`;
             const staffUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${STAFF_SHEET_NAME}?key=${API_KEY}`;
             const [reportsResponse, staffResponse] = await Promise.all([fetch(reportsUrl), fetch(staffUrl)]);
-            if (!reportsResponse.ok || !staffResponse.ok) throw new Error('API ला प्रतिसाद मिळाला नाही. कृपया की (Key) किंवा शीट आयडी तपासा.');
+            if (!reportsResponse.ok || !staffResponse.ok) throw new Error('API ला प्रतिसाद मिळाला नाही.');
             const reportsRaw = await reportsResponse.json();
             const staffRaw = await staffResponse.json();
             const headers = reportsRaw.values[0];
@@ -237,7 +151,7 @@
             staffList = (staffRaw.values.slice(1) || []).map(row => ({unit: row[0], name: row[1]}));
             initializeDashboard();
         } catch (error) {
-            contentArea.innerHTML = `<div class="loader" style="color: var(--danger-color);">डेटा लोड करताना त्रुटी आली: ${error.message}</div>`;
+            document.getElementById('dashboard-content').innerHTML = `<div class="loader" style="color: var(--danger-color);">डेटा लोड करताना त्रुटी आली: ${error.message}</div>`;
         }
     }
 
@@ -281,15 +195,14 @@
         
         const latestDataAsOfDate = calculateLatestEntriesAsOf(dateFilter);
         const highBalanceStaff = latestDataAsOfDate.filter(row => safeParseFloat(row['हातावर शिल्लक']) > 3000);
-        const totalCashInHandStaff = latestDataAsOfDate.filter(row => safeParseFloat(row['हातावर शिल्लक']) > 0);
         
         currentFilteredData.daily = dailyData;
         currentFilteredData.highBalance = (unit === 'संपूर्ण') ? highBalanceStaff : highBalanceStaff.filter(s => s.युनिट === unit);
-        currentFilteredData.totalCash = (unit === 'संपूर्ण') ? totalCashInHandStaff : totalCashInHandStaff.filter(s => s.युनिट === unit);
+        currentFilteredData.totalCash = (unit === 'संपूर्ण') ? latestDataAsOfDate : latestDataAsOfDate.filter(s => s.युनिट === unit);
 
-        const contentArea = document.getElementById('dashboard-content');
-        contentArea.innerHTML = `
+        document.getElementById('dashboard-content').innerHTML = `
             <div class="kpi-cards" id="kpiCards"></div>
+            <div class="kpi-cards" id="matchStatusKpis" style="margin-top: 1rem;"></div>
             <div class="dashboard-grid">
                 <div class="chart-container"><div id="topCashInHandChart" style="height: 400px; width: 100%;"></div></div>
                 <div class="chart-container"><div id="breakdownChart" style="height: 400px; width: 100%;"></div></div>
@@ -299,6 +212,7 @@
             <div class="insights-card" id="managerialInsights"></div>`;
         
         renderKpiCards(dailyData, highBalanceStaff, latestDataAsOfDate, unit);
+        renderMatchStatusKpis(dailyData);
         renderHighBalanceTable(unit, highBalanceStaff);
         renderDetailedReportTable(dailyData);
         drawCharts(dailyData, latestDataAsOfDate);
@@ -306,162 +220,94 @@
     }
 
     function renderKpiCards(dailyData, highBalanceStaff, latestData, unit) {
-        const onlineRecovery = dailyData.reduce((s, r) => s + safeParseFloat(r['ऑनलाइन रिकवरी']), 0);
-        const offlineRecovery = dailyData.reduce((s, r) => s + safeParseFloat(r['ऑफलाईन रिकवरी']), 0);
-        const totalRecovery = onlineRecovery + offlineRecovery;
+        const totalRecovery = dailyData.reduce((s, r) => s + safeParseFloat(r['एकूण रिकवरी']), 0);
         const highBalanceCount = (unit === 'संपूर्ण' ? highBalanceStaff : highBalanceStaff.filter(s => s.युनिट === unit)).length;
-        
-        let totalCashInHand = (unit === 'संपूर्ण' ? latestData : latestData.filter(row => row['युनिट'] === unit))
-                                .reduce((sum, row) => sum + safeParseFloat(row['हातावर शिल्लक']), 0);
-
+        let totalCashInHand = (unit === 'संपूर्ण' ? latestData : latestData.filter(row => row['युनिट'] === unit)).reduce((sum, row) => sum + safeParseFloat(row['हातावर शिल्लक']), 0);
         const phonePeQrTotal = dailyData.reduce((s, r) => s + safeParseFloat(r['फोनपे QR']), 0);
-        const phonePeQrPercentage = totalRecovery > 0 ? (phonePeQrTotal / totalRecovery) * 100 : 0;
-        const formattedPercentage = phonePeQrPercentage.toFixed(1);
-
-        // **नवीन कार्ड्ससाठी गणना**
-        const officeDepositTotal = dailyData.reduce((s, r) => s + safeParseFloat(r['ऑफिस मध्ये जमा']), 0);
-        const seniorDepositTotal = dailyData.reduce((s, r) => s + safeParseFloat(r['वरीष्ठांकडे जमा']), 0);
+        const officeDepositTotal = dailyData.reduce((s,r) => s + safeParseFloat(r['ऑफिस मध्ये जमा']), 0);
 
         document.getElementById('kpiCards').innerHTML = `
             <div class="kpi-card clickable" onclick="showDetailsPopup('daily', 'एकूण रिकवरी (आजची)')"><div class="icon" style="color:#005A9C; background:#eaf2f8;">💰</div><div class="text"><h3>एकूण रिकवरी (आजची)</h3><p>${formatCurrency(totalRecovery)}</p></div></div>
-            <div class="kpi-card clickable" onclick="showDetailsPopup('dailyOnline', 'ऑनलाइन रिकवरी (आजची)')"><div class="icon" style="color:var(--online-color); background:#eaf2f8;">📱</div><div class="text"><h3>ऑनलाइन रिकवरी</h3><p>${formatCurrency(onlineRecovery)}</p></div></div>
-            <div class="kpi-card clickable" onclick="showDetailsPopup('dailyOffline', 'ऑफलाइन रिकवरी (आजची)')"><div class="icon" style="color:var(--secondary-color); background:#e8f8f5;">🏦</div><div class="text"><h3>ऑफलाइन रिकवरी</h3><p>${formatCurrency(offlineRecovery)}</p></div></div>
+            <div class="kpi-card clickable" onclick="showDetailsPopup('dailyOnline', 'ऑनलाइन रिकवरी (आजची)')"><div class="icon" style="color:var(--online-color); background:#eaf2f8;">📱</div><div class="text"><h3>ऑनलाइन रिकवरी</h3><p>${formatCurrency(dailyData.reduce((s, r) => s + safeParseFloat(r['ऑनलाइन रिकवरी']), 0))}</p></div></div>
+            <div class="kpi-card clickable" onclick="showDetailsPopup('dailyOffline', 'ऑफलाइन रिकवरी (आजची)')"><div class="icon" style="color:var(--secondary-color); background:#e8f8f5;">🏦</div><div class="text"><h3>ऑफलाइन रिकवरी</h3><p>${formatCurrency(dailyData.reduce((s, r) => s + safeParseFloat(r['ऑफलाईन रिकवरी']), 0))}</p></div></div>
             <div class="kpi-card clickable" onclick="showDetailsPopup('highBalance', 'जास्त शिल्लक कर्मचारी')"><div class="icon" style="color:var(--highlight-color); background:#fdebd0;">⚠️</div><div class="text"><h3>जास्त शिल्लक कर्मचारी</h3><p>${highBalanceCount}</p></div></div>
-            <div class="kpi-card clickable" onclick="showDetailsPopup('totalCash', 'एकूण हातावर शिल्लक')"><div class="icon" style="color:#28a745; background:#e8f5e9;">💵</div><div class="text"><h3>एकूण हातावर शिल्लक</h3><p>${formatCurrency(totalCashInHand)}</p></div></div>
-            <div class="kpi-card clickable" onclick="showDetailsPopup('phonePeQr', 'QR फोनपे ने जमा')">
+            <div class="kpi-card clickable" onclick="showDetailsPopup('totalCash', 'एकूण हातावर शिल्लक')"><div class="icon" style="color:var(--success-color); background:#e8f5e9;">💵</div><div class="text"><h3>एकूण हातावर शिल्लक</h3><p>${formatCurrency(totalCashInHand)}</p></div></div>
+            <div class="kpi-card clickable" onclick="showDetailsPopup('officeDeposit', 'ऑफिस मध्ये जमा')"><div class="icon" style="color:#17A2B8; background:#e8f6f8;">🏢</div><div class="text"><h3>ऑफिस मध्ये जमा</h3><p>${formatCurrency(officeDepositTotal)}</p></div></div>
+             <div class="kpi-card clickable" onclick="showDetailsPopup('phonePeQr', 'QR फोनपे ने जमा')">
                 <div class="icon" style="color:#8E44AD; background:#f5eef8;">📲</div>
                 <div class="text">
                     <h3>QR फोनपे ने जमा</h3>
-                    <p>${formatCurrency(phonePeQrTotal)} <span style="font-size: 1.4rem; color: #555;">(${formattedPercentage}%)</span></p>
-                </div>
-            </div>
-            <!-- **नवीन कार्ड: ऑफिस मध्ये जमा** -->
-            <div class="kpi-card clickable" onclick="showDetailsPopup('officeDeposit', 'ऑफिस मध्ये जमा')">
-                <div class="icon" style="color:#17A2B8; background:#e8f6f8;">🏢</div>
-                <div class="text">
-                    <h3>ऑफिस मध्ये जमा</h3>
-                    <p>${formatCurrency(officeDepositTotal)}</p>
-                </div>
-            </div>
-            <!-- **नवीन कार्ड: वरिष्ठांकडे जमा** -->
-            <div class="kpi-card clickable" onclick="showDetailsPopup('seniorDeposit', 'वरीष्ठांकडे जमा')">
-                <div class="icon" style="color:#6C757D; background:#f0f1f2;">👨‍💼</div>
-                <div class="text">
-                    <h3>वरीष्ठांकडे जमा</h3>
-                    <p>${formatCurrency(seniorDepositTotal)}</p>
+                    <p>${formatCurrency(phonePeQrTotal)}</p>
                 </div>
             </div>`;
     }
 
+    function renderMatchStatusKpis(dailyData) {
+        const matchedCount = dailyData.filter(r => r['रिकवरी जुळली?'] === 'होय').length;
+        const notMatchedCount = dailyData.filter(r => r['रिकवरी जुळली?'] === 'नाही').length;
+        const pendingCount = dailyData.length - (matchedCount + notMatchedCount);
+
+        document.getElementById('matchStatusKpis').innerHTML = `
+            <div class="kpi-card clickable" onclick="showDetailsPopup('matchYes', 'रिकव्हरी जुळली')"><div class="icon" style="color:var(--success-color); background:#eafaf1;">✅</div><div class="text"><h3>रिकव्हरी जुळली</h3><p>${matchedCount}</p></div></div>
+            <div class="kpi-card clickable" onclick="showDetailsPopup('matchNo', 'रिकव्हरी नाही जुळली')"><div class="icon" style="color:var(--danger-color); background:#f9ebea;">❌</div><div class="text"><h3>नाही जुळली</h3><p>${notMatchedCount}</p></div></div>
+            <div class="kpi-card clickable" onclick="showDetailsPopup('matchPending', 'रिकव्हरी प्रलंबित')"><div class="icon" style="color:var(--pending-color); background:#fef5e7;">⏳</div><div class="text"><h3>प्रलंबित</h3><p>${pendingCount}</p></div></div>`;
+    }
+    
     function showDetailsPopup(dataType, title) {
-        const modal = document.getElementById('detailsModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalBody = document.getElementById('modalBody');
-        
+        const modal = document.getElementById('detailsModal'), modalTitle = document.getElementById('modalTitle'), modalBody = document.getElementById('modalBody');
         modalTitle.textContent = title;
-        
         let data, columns, sortKey;
         const staffNameKey = 'स्टाफचे नांव';
 
         switch (dataType) {
-            case 'daily':
-                data = currentFilteredData.daily;
-                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'एकूण रिकवरी', header: 'एकूण रिकवरी'}];
-                sortKey = 'एकूण रिकवरी';
-                break;
-            case 'dailyOnline':
-                data = currentFilteredData.daily.filter(r => safeParseFloat(r['ऑनलाइन रिकवरी']) > 0);
-                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'ऑनलाइन रिकवरी', header: 'ऑनलाइन रिकवरी'}];
-                sortKey = 'ऑनलाइन रिकवरी';
-                break;
-            case 'dailyOffline':
-                 data = currentFilteredData.daily.filter(r => safeParseFloat(r['ऑफलाईन रिकवरी']) > 0);
-                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'ऑफलाईन रिकवरी', header: 'ऑफलाइन रिकवरी'}];
-                sortKey = 'ऑफलाईन रिकवरी';
-                break;
-            case 'highBalance':
-                data = currentFilteredData.highBalance;
-                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'हातावर शिल्लक', header: 'हातावर शिल्लक'}];
-                sortKey = 'हातावर शिल्लक';
-                break;
-            case 'totalCash':
-                data = currentFilteredData.totalCash;
-                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'हातावर शिल्लक', header: 'हातावर शिल्लक'}];
-                sortKey = 'हातावर शिल्लक';
-                break;
-            case 'phonePeQr':
-                data = currentFilteredData.daily.filter(r => safeParseFloat(r['फोनपे QR']) > 0);
-                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'फोनपे QR', header: 'फोनपे QR जमा'}];
-                sortKey = 'फोनपे QR';
-                break;
-            // **नवीन कार्ड्ससाठी Popup Logic**
-            case 'officeDeposit':
-                data = currentFilteredData.daily.filter(r => safeParseFloat(r['ऑफिस मध्ये जमा']) > 0);
-                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'ऑफिस मध्ये जमा', header: 'ऑफिस मध्ये जमा'}];
-                sortKey = 'ऑफिस मध्ये जमा';
-                break;
-            case 'seniorDeposit':
-                data = currentFilteredData.daily.filter(r => safeParseFloat(r['वरीष्ठांकडे जमा']) > 0);
-                columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'वरीष्ठांकडे जमा', header: 'वरीष्ठांकडे जमा'}];
-                sortKey = 'वरीष्ठांकडे जमा';
-                break;
-            default:
-                modalBody.innerHTML = '<p>डेटा उपलब्ध नाही.</p>';
-                modal.style.display = "block";
-                return;
+            case 'daily': data = currentFilteredData.daily; columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'एकूण रिकवरी', header: 'एकूण रिकवरी'}]; sortKey = 'एकूण रिकवरी'; break;
+            case 'dailyOnline': data = currentFilteredData.daily.filter(r => safeParseFloat(r['ऑनलाइन रिकवरी']) > 0); columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'ऑनलाइन रिकवरी', header: 'ऑनलाइन रिकवरी'}]; sortKey = 'ऑनलाइन रिकवरी'; break;
+            case 'dailyOffline': data = currentFilteredData.daily.filter(r => safeParseFloat(r['ऑफलाईन रिकवरी']) > 0); columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'ऑफलाईन रिकवरी', header: 'ऑफलाइन रिकवरी'}]; sortKey = 'ऑफलाईन रिकवरी'; break;
+            case 'highBalance': data = currentFilteredData.highBalance; columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'हातावर शिल्लक', header: 'हातावर शिल्लक'}]; sortKey = 'हातावर शिल्लक'; break;
+            case 'totalCash': data = currentFilteredData.totalCash; columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'हातावर शिल्लक', header: 'हातावर शिल्लक'}]; sortKey = 'हातावर शिल्लक'; break;
+            case 'officeDeposit': data = currentFilteredData.daily.filter(r => safeParseFloat(r['ऑफिस मध्ये जमा']) > 0); columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'ऑफिस मध्ये जमा', header: 'ऑफिस मध्ये जमा'}]; sortKey = 'ऑफिस मध्ये जमा'; break;
+            case 'phonePeQr': data = currentFilteredData.daily.filter(r => safeParseFloat(r['फोनपे QR']) > 0); columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'फोनपे QR', header: 'फोनपे QR जमा'}]; sortKey = 'फोनपे QR'; break;
+            case 'matchYes': data = currentFilteredData.daily.filter(r => r['रिकवरी जुळली?'] === 'होय'); columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}]; break;
+            case 'matchNo': data = currentFilteredData.daily.filter(r => r['रिकवरी जुळली?'] === 'नाही'); columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}, {key: 'न जुळण्याचे कारण', header: 'कारण'}]; break;
+            case 'matchPending': data = currentFilteredData.daily.filter(r => !['होय', 'नाही'].includes(r['रिकवरी जुळली?'])); columns = [{key: staffNameKey, header: 'स्टाफचे नांव'}]; break;
+            default: modalBody.innerHTML = '<p>डेटा उपलब्ध नाही.</p>'; modal.style.display = "block"; return;
         }
 
-        if (!data || data.length === 0) {
-            modalBody.innerHTML = '<p>या विभागासाठी कोणताही डेटा उपलब्ध नाही.</p>';
-        } else {
-            data.sort((a, b) => safeParseFloat(b[sortKey]) - safeParseFloat(a[sortKey]));
-            let tableHTML = '<table><thead><tr>';
-            columns.forEach(col => tableHTML += `<th>${col.header}</th>`);
-            tableHTML += '</tr></thead><tbody>';
-
+        if (!data || data.length === 0) { modalBody.innerHTML = '<p>या विभागासाठी कोणताही डेटा उपलब्ध नाही.</p>'; } 
+        else {
+            if (sortKey) data.sort((a, b) => safeParseFloat(b[sortKey]) - safeParseFloat(a[sortKey]));
+            let tableHTML = '<table><thead><tr>' + columns.map(c => `<th>${c.header}</th>`).join('') + '</tr></thead><tbody>';
             let totalAmount = 0;
             data.forEach(row => {
-                tableHTML += '<tr>';
-                columns.forEach(col => {
-                    const value = row[col.key];
-                    if (col.key !== staffNameKey) {
-                        tableHTML += `<td>${formatCurrency(value)}</td>`;
-                    } else {
-                        tableHTML += `<td>${value || '-'}</td>`;
-                    }
-                });
-                tableHTML += '</tr>';
-                totalAmount += safeParseFloat(row[sortKey]);
+                 tableHTML += '<tr>' + columns.map(col => `<td>${col.key.includes('रिकवरी') || col.key.includes('शिल्लक') || col.key.includes('जमा') || col.key.includes('QR') ? formatCurrency(row[col.key]) : (row[col.key] || '-')}</td>`).join('') + '</tr>';
+                if (sortKey) totalAmount += safeParseFloat(row[sortKey]);
             });
-            
             tableHTML += '</tbody>';
-            if (columns.length > 1) {
-                tableHTML += `<tfoot><tr><td><strong>एकूण</strong></td><td><strong>${formatCurrency(totalAmount)}</strong></td></tr></tfoot>`;
+            if (sortKey && columns.length > 1) {
+                let footerHTML = '<tfoot><tr><td><strong>एकूण</strong></td>';
+                footerHTML += `<td><strong>${formatCurrency(totalAmount)}</strong></td>`;
+                footerHTML += '</tr></tfoot>';
+                tableHTML += footerHTML;
             }
             tableHTML += '</table>';
             modalBody.innerHTML = tableHTML;
         }
-
         modal.style.display = "block";
     }
-    
-    function renderHighBalanceTable(unit, highBalanceData) {
-        let filteredHighBalance = highBalanceData;
-        if (unit !== 'संपूर्ण') { filteredHighBalance = highBalanceData.filter(row => row['युनिट'] === unit); }
-        const table = document.getElementById('highBalanceTable');
-        let headerHtml = (unit === 'संपूर्ण') ? '<th>स्टाफचे नांव</th><th>युनिट</th><th>हातावर शिल्लक (₹)</th><th>शेवटचा रिपोर्ट</th>' : '<th>स्टाफचे नांव</th><th>हातावर शिल्लक (₹)</th><th>शेवटचा रिपोर्ट दिनांक</th>';
-        let bodyHtml = '';
-        if (filteredHighBalance.length === 0) {
-            const colspan = (unit === 'संपूर्ण') ? 4 : 3;
-            bodyHtml = `<tr><td colspan="${colspan}" style="text-align:center;">या युनिटमध्ये कोणीही जास्त शिल्लक असलेला कर्मचारी नाही.</td></tr>`;
-        } else {
-            filteredHighBalance.sort((a,b) => safeParseFloat(b['हातावर शिल्लक']) - safeParseFloat(a['हातावर शिल्लक'])).forEach(row => {
-                bodyHtml += `<tr class="highlight-row"><td>${row['स्टाफचे नांव']}</td>`;
-                if (unit === 'संपूर्ण') bodyHtml += `<td>${row['युनिट']}</td>`;
-                bodyHtml += `<td>${formatCurrency(row['हातावर शिल्लक'])}</td><td>${new Date(row['दिनांक']).toLocaleDateString('en-GB')}</td></tr>`;
-            });
+
+    function toggleReasonInput(event, timestamp) {
+        const reasonInput = document.getElementById(`reason-${timestamp}`);
+        if (reasonInput) {
+            if (event.target.value === 'नाही') {
+                reasonInput.disabled = false;
+            } else {
+                reasonInput.disabled = true;
+                if(reasonInput.value) { 
+                    reasonInput.value = '';
+                    updateRowData(event, timestamp, 'reasonForMismatch', ''); 
+                }
+            }
         }
-        table.innerHTML = `<thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody>`;
     }
 
     function renderDetailedReportTable(data) {
@@ -480,59 +326,123 @@
             { header: 'To Sr.', key: 'वरीष्ठांकडे जमा' },
             { header: 'Office Dep', key: 'ऑफिस मध्ये जमा' },
             { header: 'Cash in Hand', key: 'हातावर शिल्लक' },
+            { header: 'रिकवरी जुळली?', key: 'matchStatus' },
+            { header: 'न जुळण्याचे कारण', key: 'reasonForMismatch' },
             { header: 'कृती', key: 'action' }
         ];
+
         let tableHTML = `<thead><tr>${displayColumns.map(c => `<th>${c.header}</th>`).join('')}</tr></thead><tbody>`;
+        
         data.forEach(row => {
             const isHigh = safeParseFloat(row['हातावर शिल्लक']) > 3000;
             tableHTML += isHigh ? '<tr class="highlight-row">' : '<tr>';
             displayColumns.forEach(col => {
-                if (col.key === 'action') {
-                    tableHTML += `<td><button class="delete-btn" onclick="deleteReport(event, '${row.Timestamp}')">हटवा</button></td>`;
-                } else {
-                    const value = row[col.key];
-                    tableHTML += `<td>${col.header !== 'Staff Name' ? formatCurrency(value) : (value || '-')}</td>`;
+                const value = row[col.key];
+                let cellContent = '';
+                switch(col.key) {
+                    case 'matchStatus':
+                        const status = row['रिकवरी जुळली?'] || 'निवडा';
+                        cellContent = `<select onchange="toggleReasonInput(event, '${row.Timestamp}'); updateRowData(event, '${row.Timestamp}', 'matchStatus', this.value);">
+                            <option value="निवडा" ${status === 'निवडा' ? 'selected' : ''}>निवडा</option>
+                            <option value="होय" ${status === 'होय' ? 'selected' : ''}>होय</option>
+                            <option value="नाही" ${status === 'नाही' ? 'selected' : ''}>नाही</option>
+                            <option value="उशीरा आला" ${status === 'उशीरा आला' ? 'selected' : ''}>उशीरा आला</option>
+                        </select>`;
+                        break;
+                    case 'reasonForMismatch':
+                        const isMismatch = row['रिकवरी जुळली?'] === 'नाही';
+                        cellContent = `<input type="text" id="reason-${row.Timestamp}" onblur="updateRowData(event, '${row.Timestamp}', 'reasonForMismatch', this.value)" value="${row['न जुळण्याचे कारण'] || ''}" ${!isMismatch ? 'disabled' : ''}>`;
+                        break;
+                    case 'action': cellContent = `<button class="delete-btn" onclick="deleteReport(event, '${row.Timestamp}')">हटवा</button>`; break;
+                    case 'स्टाफचे नांव': cellContent = (value || '-') + `<span id="spinner-${row.Timestamp}" style="display:none;" class="status-update-spinner"></span>`; break;
+                    default: cellContent = formatCurrency(value); break;
                 }
+                tableHTML += `<td>${cellContent}</td>`;
             });
             tableHTML += '</tr>';
         });
-        tableHTML += '</tbody><tfoot><tr><td><strong>Total</strong></td>';
-        displayColumns.slice(1, -1).forEach(col => {
-            const total = data.reduce((sum, row) => sum + safeParseFloat(row[col.key]), 0);
-            tableHTML += `<td><strong>${formatCurrency(total)}</strong></td>`;
+
+        tableHTML += '</tbody><tfoot><tr>';
+        displayColumns.forEach(col => {
+            const nonSummable = ['action', 'matchStatus', 'reasonForMismatch'];
+            if (nonSummable.includes(col.key)) { tableHTML += '<td></td>'; }
+            else {
+                const total = data.reduce((sum, row) => sum + safeParseFloat(row[col.key]), 0);
+                tableHTML += `<td><strong>${(col.key === 'स्टाफचे नांव' ? 'एकूण' : formatCurrency(total))}</strong></td>`;
+            }
         });
-        tableHTML += '<td></td>'
         tableHTML += '</tr></tfoot>';
         table.innerHTML = tableHTML;
     }
-
-    async function deleteReport(event, timestamp) {
-        if (!confirm('तुम्हाला हा रिपोर्ट नक्की हटवायचा आहे का?')) return;
-        const button = event.target;
-        const originalButtonText = button.textContent;
-        button.textContent = 'हटवत आहे...';
-        button.disabled = true;
+    
+    async function updateRowData(event, timestamp, field, value) { /* Unchanged */ }
+    function renderHighBalanceTable(unit, highBalanceData) { /* Unchanged */ }
+    async function deleteReport(event, timestamp) { /* Unchanged */ }
+    function renderManagerialInsights(dailyData, highBalanceStaff) { /* Unchanged */ }
+    function drawCharts(dailyData, latestDataAsOfDate) { /* Unchanged */ }
+    updateRowData = async function(event, timestamp, field, value) {
+        const spinner = document.getElementById(`spinner-${timestamp}`);
+        if(spinner) spinner.style.display = 'inline-block';
+        const columnMap = { matchStatus: 'रिकवरी जुळली?', reasonForMismatch: 'न जुळण्याचे कारण' };
         try {
             const response = await fetch(WEB_APP_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'deleteReport', timestamp: timestamp })
+                body: JSON.stringify({ action: 'updateField', timestamp, field, value })
             });
-            if (!response.ok) { throw new Error(`Server responded with status: ${response.status}`); }
+            if (!response.ok) throw new Error(`Server error: ${response.status}`);
+            const result = await response.json();
+            if (result.success) {
+                const dataIndex = fullData.findIndex(row => row.Timestamp === timestamp);
+                if (dataIndex !== -1) {
+                    fullData[dataIndex][columnMap[field]] = String(value);
+                }
+            } else { throw new Error(result.message || "Unknown server error"); }
+        } catch (error) {
+            console.error(`Update failed for ${field}:`, error.message);
+            if (field !== 'reasonForMismatch' || value !== '') { alert(`अपडेट करण्यात अयशस्वी: ${error.message}`); }
+            const dataIndex = fullData.findIndex(row => row.Timestamp === timestamp);
+            if (dataIndex !== -1) { event.target.value = fullData[dataIndex][columnMap[field]] || ''; }
+        } finally {
+            if(spinner) spinner.style.display = 'none';
+            const unitData = fullData.filter(row => row['दिनांक'] === document.getElementById('dateFilter').value && (activeUnit === 'संपूर्ण' || row['युनिट'] === activeUnit));
+            renderMatchStatusKpis(unitData);
+        }
+    };
+    renderHighBalanceTable = function(unit, highBalanceData) {
+        let filteredHighBalance = (unit === 'संपूर्ण') ? highBalanceData : highBalanceData.filter(row => row['युनिट'] === unit);
+        const table = document.getElementById('highBalanceTable');
+        let headerHtml = (unit === 'संपूर्ण') ? '<th>स्टाफचे नांव</th><th>युनिट</th><th>हातावर शिल्लक (₹)</th><th>शेवटचा रिपोर्ट</th>' : '<th>स्टाफचे नांव</th><th>हातावर शिल्लक (₹)</th><th>शेवटचा रिपोर्ट दिनांक</th>';
+        let bodyHtml = '';
+        if (filteredHighBalance.length === 0) { bodyHtml = `<tr><td colspan="${(unit === 'संपूर्ण' ? 4 : 3)}" style="text-align:center;">या युनिटमध्ये कोणीही जास्त शिल्लक असलेला कर्मचारी नाही.</td></tr>`; } 
+        else {
+            filteredHighBalance.sort((a,b) => safeParseFloat(b['हातावर शिल्लक']) - safeParseFloat(a['हातावर शिल्लक'])).forEach(row => {
+                bodyHtml += `<tr class="highlight-row"><td>${row['स्टाफचे नांव']}</td>`;
+                if (unit === 'संपूर्ण') bodyHtml += `<td>${row['युनिट']}</td>`;
+                bodyHtml += `<td>${formatCurrency(row['हातावर शिल्लक'])}</td><td>${new Date(row['दिनांक']).toLocaleDateString('en-GB')}</td></tr>`;
+            });
+        }
+        table.innerHTML = `<thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody>`;
+    };
+    deleteReport = async function(event, timestamp) {
+        if (!confirm('तुम्हाला हा रिपोर्ट नक्की हटवायचा आहे का?')) return;
+        const button = event.target;
+        button.textContent = 'हटवत आहे...'; button.disabled = true;
+        try {
+            const response = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'deleteReport', timestamp: timestamp }) });
+            if (!response.ok) throw new Error(`Server error: ${response.status}`);
             const result = await response.json();
             if (result.success) {
                 alert(result.message);
                 fullData = fullData.filter(row => row.Timestamp !== timestamp);
                 renderDashboard(activeUnit);
-            } else { throw new Error(result.message || "Unknown error from server."); }
+            } else { throw new Error(result.message || "Unknown error"); }
         } catch (error) {
             alert('रिपोर्ट हटवण्यात अयशस्वी: ' + error.message);
-            button.textContent = originalButtonText;
-            button.disabled = false;
+            button.textContent = 'हटवा'; button.disabled = false;
         }
-    }
-
-    function renderManagerialInsights(dailyData, highBalanceStaff) {
+    };
+    renderManagerialInsights = function(dailyData, highBalanceStaff) {
         const insightsList = document.createElement('ul');
         const highBalanceInUnit = highBalanceStaff.filter(s => activeUnit === 'संपूर्ण' || s.युनिट === activeUnit);
         if(highBalanceInUnit.length > 0) {
@@ -540,21 +450,19 @@
             insightsList.innerHTML += `<li>या तारखेपर्यंत, <strong>${highBalanceInUnit.length}</strong> कर्मचाऱ्यांकडे ३००० पेक्षा जास्त शिल्लक आहे. सर्वाधिक शिल्लक <strong>${highestBalanceStaff['स्टाफचे नांव']}</strong> यांच्याकडे (${formatCurrency(highestBalanceStaff['हातावर शिल्लक'])}) आहे.</li>`;
         } else { insightsList.innerHTML += `<li>उत्कृष्ट! या तारखेपर्यंत कोणत्याही कर्मचाऱ्याकडे ३००० पेक्षा जास्त शिल्लक नाही.</li>`; }
         if(dailyData.length > 0) {
-            const highestRecoveryStaff = dailyData.reduce((max, staff) => (safeParseFloat(max['एकूण रिकवरी']) || 0) > (safeParseFloat(staff['एकूण रिकवरी']) || 0) ? max : staff, dailyData[0]);
+            const highestRecoveryStaff = dailyData.reduce((max, staff) => (safeParseFloat(max['एकूण रिकवरी']) || 0) > (safeParseFloat(staff['एकूण रिकवरी']) || 0) ? max : staff, { 'एकूण रिकवरी': 0 });
             if (safeParseFloat(highestRecoveryStaff['एकूण रिकवरी']) > 0) { insightsList.innerHTML += `<li>आजच्या दिवशी सर्वाधिक रिकवरी <strong>${highestRecoveryStaff['स्टाफचे नांव']}</strong> यांनी केली आहे (${formatCurrency(highestRecoveryStaff['एकूण रिकवरी'])}).</li>`; }
             else { insightsList.innerHTML += `<li>आजच्या दिवशी कोणत्याही स्टाफने रिकवरी रिपोर्ट केलेली नाही.</li>`; }
         } else { insightsList.innerHTML += `<li>निवडलेल्या तारखेसाठी कोणताही तपशीलवार रिपोर्ट उपलब्ध नाही.</li>`; }
         document.getElementById('managerialInsights').innerHTML = `<h2>व्यवस्थापकांसाठी महत्त्वाची निरीक्षणे</h2>`;
         document.getElementById('managerialInsights').appendChild(insightsList);
-    }
-
-    function drawCharts(dailyData, latestDataAsOfDate) {
+    };
+    drawCharts = function(dailyData, latestDataAsOfDate) {
         const topCashChartDiv = document.getElementById('topCashInHandChart');
         const breakdownChartDiv = document.getElementById('breakdownChart');
         let staffWithCash = latestDataAsOfDate.filter(row => (activeUnit === 'संपूर्ण' || row['युनिट'] === activeUnit) && safeParseFloat(row['हातावर शिल्लक']) > 0);
-        if (staffWithCash.length === 0) {
-            topCashChartDiv.innerHTML = '<div class="loader">हातावर शिल्लक असलेला डेटा उपलब्ध नाही.</div>';
-        } else {
+        if (staffWithCash.length === 0) { topCashChartDiv.innerHTML = '<div class="loader">हातावर शिल्लक असलेला डेटा उपलब्ध नाही.</div>'; }
+        else {
             staffWithCash.sort((a, b) => safeParseFloat(b['हातावर शिल्लक']) - safeParseFloat(a['हातावर शिल्लक']));
             const top5Staff = staffWithCash.slice(0, 5);
             const chartData = [['स्टाफचे नांव', 'हातावर शिल्लक', { role: 'style' }]];
@@ -565,15 +473,13 @@
         }
         const onlineRecovery = dailyData.reduce((s, r) => s + safeParseFloat(r['ऑनलाइन रिकवरी']), 0);
         const offlineRecovery = dailyData.reduce((s, r) => s + safeParseFloat(r['ऑफलाईन रिकवरी']), 0);
-        const totalRecovery = onlineRecovery + offlineRecovery;
-        if (totalRecovery === 0) {
-            breakdownChartDiv.innerHTML = '<div class="loader">आजच्या तारखेला रिकवरीचा डेटा उपलब्ध नाही.</div>';
-        } else {
+        if (onlineRecovery + offlineRecovery === 0) { breakdownChartDiv.innerHTML = '<div class="loader">आजच्या तारखेला रिकवरीचा डेटा उपलब्ध नाही.</div>'; }
+        else {
             const breakdownData = google.visualization.arrayToDataTable([['जमा प्रकार', 'रक्कम'], ['ऑनलाइन रिकवरी', onlineRecovery], ['ऑफलाइन रिकवरी', offlineRecovery]]);
             const options = { title: 'ऑनलाइन vs ऑफलाइन रिकवरीचे प्रमाण', pieHole: 0.4, colors: [ '#3498DB', '#1E8449'], pieSliceText: 'percentage', legend: { position: 'bottom' }};
             new google.visualization.PieChart(breakdownChartDiv).draw(breakdownData, options);
         }
-    }
+    };
 </script>
 </body>
 </html>
