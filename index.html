@@ -35,6 +35,7 @@
     .print-btn { background-color: var(--brand-green); }
     .action-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
     
+    /* !! महत्त्वाचे !! हे CSS नियम प्रिंट विभाग लपवतात आणि फक्त प्रिंट करताना दाखवतात */
     #printSection { display: none; }
     @media print {
       body { background: #fff; margin: 0; font-family: Arial, sans-serif; font-size: 10pt; color: #333; }
@@ -89,6 +90,7 @@
       <div id="status-message" style="text-align:center; margin-top:1rem; font-weight:bold;"></div>
     </form>
 
+    <!-- !! हा संपूर्ण विभाग स्क्रीनवर लपलेला असतो आणि फक्त प्रिंटमध्ये दिसतो !! -->
     <div id="printSection">
       <div class="print-header"><h1>अनिक फायनान्सीयल सर्वीसेस</h1><p>दैनंदिन रिकवरी रेकॉर्ड तपशील</p></div>
       <table class="print-table" style="margin-bottom: 0.75cm; border: 1px solid #aaa; padding: 10px 15px;">
@@ -132,19 +134,13 @@
     let staffData = {};
     let allReports = [];
 
-    // फंक्शन: फॉर्मचा मुख्य भाग (रक्कम रकाने) लॉक/अनलॉक करण्यासाठी
     function toggleMainForm(enable) {
       const formBody = document.getElementById('form-body');
       const elements = formBody.querySelectorAll('input, button');
-      elements.forEach(el => {
-        if (!el.readOnly) {
-          el.disabled = !enable;
-        }
-      });
+      elements.forEach(el => { if (!el.readOnly) { el.disabled = !enable; } });
       document.getElementById('submitBtn').disabled = !enable;
     }
 
-    // फंक्शन: रिपोर्ट डुप्लिकेट आहे का ते तपासण्यासाठी
     function isDuplicate(staffName, reportDateStr) {
       if (!staffName || !reportDateStr) return false;
       const dateToCompare = new Date(reportDateStr).toLocaleDateString('en-CA');
@@ -157,12 +153,10 @@
       });
     }
 
-    // फंक्शन: स्टाफ किंवा तारीख बदलल्यावर डुप्लिकेट तपासा आणि UI अपडेट करा
     function checkForDuplicatesAndUpdateUI() {
       const staffName = document.getElementById('staffName').value;
       const reportDate = document.getElementById('reportDate').value;
       const statusDiv = document.getElementById('status-message');
-
       if (isDuplicate(staffName, reportDate)) {
         statusDiv.textContent = 'या स्टाफचा या तारखेचा रिपोर्ट आधीच सबमिट झाला आहे.';
         statusDiv.style.color = 'var(--brand-red)';
@@ -170,22 +164,16 @@
       } else {
         statusDiv.textContent = '';
         toggleMainForm(true);
-        fetchOpeningBalance(); // डुप्लिकेट नसेल तरच ओपनिंग बॅलन्स आणा
+        fetchOpeningBalance();
       }
     }
 
-    // फंक्शन: रिपोर्ट सेव्ह झाल्यावर संपूर्ण फॉर्म लॉक करण्यासाठी
     function toggleFormLock(lock) {
       const form = document.getElementById('recoveryForm');
       const elements = form.querySelectorAll('input, select, button');
-      elements.forEach(el => {
-        if (el.id !== 'submitBtn' && el.id !== 'printBtn') {
-          el.disabled = lock;
-        }
-      });
+      elements.forEach(el => { if (el.id !== 'submitBtn' && el.id !== 'printBtn') { el.disabled = lock; } });
     }
     
-    // फंक्शन: नवीन रिपोर्टसाठी फॉर्म रिसेट करण्यासाठी
     function resetFormForNewEntry() {
         const form = document.getElementById('recoveryForm');
         toggleFormLock(false);
@@ -197,17 +185,14 @@
         document.getElementById('status-message').textContent = '';
         document.getElementById('printBtn').disabled = true;
         document.getElementById('submitBtn').textContent = 'रिपोर्ट जतन करा';
-        
         const staffSelect = document.getElementById('staffName');
         staffSelect.innerHTML = '<option value="">आधी युनिट निवडा</option>';
         staffSelect.disabled = true;
         document.getElementById('unitName').selectedIndex = 0;
-        
         toggleMainForm(true);
         calculateAllTotals();
     }
 
-    // फंक्शन: रिपोर्ट सबमिट करण्यासाठी
     async function submitReport(event) {
         event.preventDefault();
         const statusDiv = document.getElementById('status-message');
@@ -222,11 +207,7 @@
         const staffName = document.getElementById('staffName').value;
         const reportDateStr = document.getElementById('reportDate').value;
         
-        if (isDuplicate(staffName, reportDateStr)) {
-            alert("हा रिपोर्ट आधीच सबमिट झाला आहे. तुम्ही नवीन माहिती जतन करू शकत नाही.");
-            return;
-        }
-
+        if (isDuplicate(staffName, reportDateStr)) { alert("हा रिपोर्ट आधीच सबमिट झाला आहे. तुम्ही नवीन माहिती जतन करू शकत नाही."); return; }
         if (getFloatValue("difference").toFixed(2) !== '0.00' && getFloatValue("difference").toFixed(2) !== '-0.00') { alert("तफावत (Difference) 0 नाही."); return; }
         if (!staffName) { alert("कृपया स्टाफचे नाव निवडा."); return; }
 
@@ -235,28 +216,18 @@
         submitBtn.textContent = "जतन होत आहे..."; 
         statusDiv.textContent = "";
         
-        const reportData = {
-            reportDate: reportDateStr, staffName, unitName: document.getElementById('unitName').value,
-            openingAmount: getFloatValue('openingAmount'), onlineRecovery: getFloatValue('onlineRecovery'),
-            offlineRecoveryTotal: getFloatValue('offlineRecoveryTotal'), totalRecovery: getFloatValue('totalRecovery'),
-            totalAmount: getFloatValue('totalAmount'), sbiAmount: getFloatValue('sbiAmount'),
-            mgbAmount: getFloatValue('mgbAmount'), phonePayAmount: getFloatValue('phonePayAmount'),
-            otherBankAmount: getFloatValue('otherBankAmount'), cashsr: getFloatValue('cashsr'),
-            officeAmount: getFloatValue('officeAmount'), cashInHandAmount: getFloatValue('cashInHandAmount')
-        };
+        const reportData = { reportDate: reportDateStr, staffName, unitName: document.getElementById('unitName').value, openingAmount: getFloatValue('openingAmount'), onlineRecovery: getFloatValue('onlineRecovery'), offlineRecoveryTotal: getFloatValue('offlineRecoveryTotal'), totalRecovery: getFloatValue('totalRecovery'), totalAmount: getFloatValue('totalAmount'), sbiAmount: getFloatValue('sbiAmount'), mgbAmount: getFloatValue('mgbAmount'), phonePayAmount: getFloatValue('phonePayAmount'), otherBankAmount: getFloatValue('otherBankAmount'), cashsr: getFloatValue('cashsr'), officeAmount: getFloatValue('officeAmount'), cashInHandAmount: getFloatValue('cashInHandAmount') };
         
         try {
             await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(reportData) });
             statusDiv.textContent = "रिपोर्ट यशस्वीरित्या जतन झाला. तुम्ही आता प्रिंट घेऊ शकता."; 
             statusDiv.style.color = 'var(--brand-green)';
             populatePrintSection(reportData);
-            
             toggleFormLock(true);
             printBtn.disabled = false;
             submitBtn.textContent = "नवीन रिपोर्ट भरा";
             submitBtn.disabled = false;
-            
-            await loadInitialData(); // नवीन रिपोर्टची नोंद घेण्यासाठी डेटा पुन्हा लोड करा
+            await loadInitialData();
         } catch (error) {
             statusDiv.textContent = "त्रुटी: रिपोर्ट जतन झाला नाही."; 
             statusDiv.style.color = 'var(--brand-red)';
@@ -269,28 +240,16 @@
     function populatePrintSection(data) {
         const setVal = (id, value, isText = false) => { const el = document.getElementById(id); el.textContent = value; if(isText) el.classList.add('text'); else el.classList.remove('text'); };
         const f = (num) => (typeof num === 'number' ? num.toFixed(2) : '0.00');
-        setVal('print-staffName', data.staffName, true);
-        setVal('print-date', new Date(data.reportDate).toLocaleDateString('en-GB'), true);
-        setVal('print-onlineRecovery', f(data.onlineRecovery)); setVal('print-offlineRecoveryTotal', f(data.offlineRecoveryTotal));
-        setVal('print-totalRecovery', f(data.totalRecovery)); setVal('print-openingAmount', f(data.openingAmount));
-        setVal('print-totalAmount', f(data.totalAmount));
-        setVal('print-sbiAmount', f(data.sbiAmount)); setVal('print-mgbAmount', f(data.mgbAmount));
-        setVal('print-phonePayAmount', f(data.phonePayAmount)); setVal('print-otherBankAmount', f(data.otherBankAmount));
-        setVal('print-cashsr', f(data.cashsr)); setVal('print-officeAmount', f(data.officeAmount));
-        setVal('print-cashInHandAmount', f(data.cashInHandAmount));
+        setVal('print-staffName', data.staffName, true); setVal('print-date', new Date(data.reportDate).toLocaleDateString('en-GB'), true);
+        setVal('print-onlineRecovery', f(data.onlineRecovery)); setVal('print-offlineRecoveryTotal', f(data.offlineRecoveryTotal)); setVal('print-totalRecovery', f(data.totalRecovery)); setVal('print-openingAmount', f(data.openingAmount)); setVal('print-totalAmount', f(data.totalAmount)); setVal('print-sbiAmount', f(data.sbiAmount)); setVal('print-mgbAmount', f(data.mgbAmount)); setVal('print-phonePayAmount', f(data.phonePayAmount)); setVal('print-otherBankAmount', f(data.otherBankAmount)); setVal('print-cashsr', f(data.cashsr)); setVal('print-officeAmount', f(data.officeAmount)); setVal('print-cashInHandAmount', f(data.cashInHandAmount));
         const totalBreakdown = [data.sbiAmount, data.mgbAmount, data.phonePayAmount, data.otherBankAmount, data.cashsr, data.officeAmount, data.cashInHandAmount].reduce((a, b) => a + b, 0);
-        setVal('print-totalBreakdown', f(totalBreakdown));
-        setVal('print-difference', f(data.totalAmount - totalBreakdown));
+        setVal('print-totalBreakdown', f(totalBreakdown)); setVal('print-difference', f(data.totalAmount - totalBreakdown));
         const loanRows = document.querySelectorAll('#loanTable tbody tr');
         let loanTableHTML = `<table><thead><tr><th>कर्ज क्रमांक</th><th>रक्कम (₹)</th><th>कृती</th></tr></thead><tbody>`;
         let hasOfflineData = false;
         loanRows.forEach(row => {
-            const loanNo = row.cells[0].querySelector('input').value;
-            const amount = parseFloat(row.cells[1].querySelector('input').value || 0);
-            if (loanNo || amount > 0) {
-                 loanTableHTML += `<tr><td>${loanNo || '-'}</td><td>${f(amount)}</td><td></td></tr>`;
-                 hasOfflineData = true;
-            }
+            const loanNo = row.cells[0].querySelector('input').value; const amount = parseFloat(row.cells[1].querySelector('input').value || 0);
+            if (loanNo || amount > 0) { loanTableHTML += `<tr><td>${loanNo || '-'}</td><td>${f(amount)}</td><td></td></tr>`; hasOfflineData = true; }
         });
         document.getElementById('print-loan-details').innerHTML = hasOfflineData ? loanTableHTML + '</tbody></table>' : '<p style="text-align:center; font-style:italic; font-size:9pt; color:#888;">ऑफलाईन रिकवरी नाही.</p>';
     }
@@ -305,39 +264,26 @@
             staffData = {};
             (staffJson.values || []).slice(1).forEach(row => { const unit = row[0]; const name = row[1]; if (!staffData[unit]) staffData[unit] = []; staffData[unit].push(name); });
             allReports = reportsJson.values ? reportsJson.values : [];
-            const unitSelect = document.getElementById('unitName'); 
-            const currentUnit = unitSelect.value;
+            const unitSelect = document.getElementById('unitName'); const currentUnit = unitSelect.value;
             unitSelect.innerHTML = '<option value="">युनिट निवडा</option>';
             Object.keys(staffData).sort().forEach(unit => { unitSelect.innerHTML += `<option value="${unit}">${unit}</option>`; });
-            unitSelect.value = currentUnit;
-            unitSelect.disabled = false;
+            unitSelect.value = currentUnit; unitSelect.disabled = false;
         } catch (error) { alert("डेटा लोड करण्यात अयशस्वी!"); console.error(error); }
     }
 
     function fetchOpeningBalance() {
-        const staffName = document.getElementById('staffName').value;
-        const openingAmountInput = document.getElementById('openingAmount');
+        const staffName = document.getElementById('staffName').value; const openingAmountInput = document.getElementById('openingAmount');
         openingAmountInput.value = "0.00";
         if (staffName && allReports.length > 0) {
-            for (let i = allReports.length - 1; i >= 0; i--) {
-                if (allReports[i][2] === staffName) {
-                    openingAmountInput.value = parseFloat(allReports[i][14] || 0).toFixed(2);
-                    break;
-                }
-            }
+            for (let i = allReports.length - 1; i >= 0; i--) { if (allReports[i][2] === staffName) { openingAmountInput.value = parseFloat(allReports[i][14] || 0).toFixed(2); break; } }
         }
         calculateAllTotals();
     }
 
     function populateStaffNames() {
-        const selectedUnit = document.getElementById('unitName').value;
-        const staffSelect = document.getElementById('staffName');
-        staffSelect.innerHTML = '<option value="">स्टाफ निवडा</option>';
-        staffSelect.disabled = true;
-        if (selectedUnit && staffData[selectedUnit]) {
-            staffData[selectedUnit].sort().forEach(name => { staffSelect.innerHTML += `<option value="${name}">${name}</option>`; });
-            staffSelect.disabled = false;
-        }
+        const selectedUnit = document.getElementById('unitName').value; const staffSelect = document.getElementById('staffName');
+        staffSelect.innerHTML = '<option value="">स्टाफ निवडा</option>'; staffSelect.disabled = true;
+        if (selectedUnit && staffData[selectedUnit]) { staffData[selectedUnit].sort().forEach(name => { staffSelect.innerHTML += `<option value="${name}">${name}</option>`; }); staffSelect.disabled = false; }
         checkForDuplicatesAndUpdateUI();
     }
     
@@ -345,22 +291,14 @@
     function addLoanRow() { const tbody = document.getElementById('loanTable').querySelector('tbody'); tbody.insertAdjacentHTML('beforeend', `<tr><td><input type="text"></td><td><input type="number" step="0.01"></td><td><button type="button" onclick="this.parentElement.parentElement.remove()">काढा</button></td></tr>`); }
     function calculateAllTotals() { const offlineRecovery = Array.from(document.querySelectorAll('#loanTable tbody input[type=number]')).reduce((sum, el) => sum + (parseFloat(el.value) || 0), 0); document.getElementById('offlineRecoveryTotal').value = offlineRecovery.toFixed(2); const onlineRecovery = getFloatValue("onlineRecovery"); const openingAmount = getFloatValue("openingAmount"); const totalRecovery = onlineRecovery + offlineRecovery; const totalAmount = openingAmount + totalRecovery; document.getElementById('totalRecovery').value = totalRecovery.toFixed(2); document.getElementById('totalAmount').value = totalAmount.toFixed(2); const breakdownTotal = ['sbiAmount', 'mgbAmount', 'phonePayAmount', 'otherBankAmount', 'cashsr', 'officeAmount', 'cashInHandAmount'].reduce((sum, id) => sum + getFloatValue(id), 0); document.getElementById('totalBreakdown').value = breakdownTotal.toFixed(2); document.getElementById('difference').value = (totalAmount - breakdownTotal).toFixed(2); }
 
-    const FORM_START_HOUR = 6;
-    const FORM_END_HOUR = 17;
+    const FORM_START_HOUR = 6; const FORM_END_HOUR = 17;
     function checkTimeAndToggleForm() {
-      const formElement = document.getElementById('recoveryForm');
-      const messageElement = document.getElementById('timeRestrictionMessage');
-      const headerElement = document.querySelector('.main-header');
-      const now = new Date();
-      const currentHour = now.getHours();
+      const formElement = document.getElementById('recoveryForm'); const messageElement = document.getElementById('timeRestrictionMessage'); const headerElement = document.querySelector('.main-header');
+      const now = new Date(); const currentHour = now.getHours();
       if (currentHour < FORM_START_HOUR || currentHour >= FORM_END_HOUR) {
-        formElement.style.display = 'none';
-        messageElement.style.display = 'block';
-        headerElement.style.display = 'none';
+        formElement.style.display = 'none'; messageElement.style.display = 'block'; headerElement.style.display = 'none';
       } else {
-        formElement.style.display = 'block';
-        messageElement.style.display = 'none';
-        headerElement.style.display = 'block';
+        formElement.style.display = 'block'; messageElement.style.display = 'none'; headerElement.style.display = 'block';
       }
     }
 
