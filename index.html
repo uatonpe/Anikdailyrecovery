@@ -5,135 +5,467 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>दैनंदिन रिकवरी रेकॉर्ड</title>
   <style>
+    /* --- CSS Variables for Theming --- */
     :root {
-      --brand-blue: #007AFF; --brand-blue-hover: #0056b3; --brand-green: #34C759;
-      --brand-green-hover: #2ca048; --brand-red: #FF3B30; --bg-color: #f0f2f5;
-      --card-bg-color: #ffffff; --text-primary: #1c1c1e; --text-secondary: #636366;
-      --border-color: #d1d1d6; --input-bg: #f7f7f7; --border-radius-s: 6px;
-      --border-radius-m: 10px; --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --brand-blue: #007AFF;
+      --brand-green: #34C759;
+      --brand-red: #FF3B30;
+      --bg-color: #f0f2f5;
+      --card-bg-color: #ffffff;
+      --text-primary: #1c1c1e;
+      --text-secondary: #636366;
+      --border-color: #d1d1d6;
+      --input-bg: #f7f7f7;
+      --border-radius-m: 10px;
+      --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
       --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-    *, *::before, *::after { box-sizing: border-box; }
-    html { font-size: 16px; }
-    body { font-family: var(--font-stack); background-color: var(--bg-color); margin: 0; padding: 1rem; color: var(--text-primary); line-height: 1.6; }
-    .container { width: 100%; max-width: 800px; margin: 0 auto; }
-    .main-header { text-align: center; margin-bottom: 2rem; }
-    .main-header h1 { font-size: 1.75rem; font-weight: 600; margin: 0 0 0.25rem 0; }
-    .main-header p { font-size: 1rem; color: var(--text-secondary); margin: 0; }
-    .card { background-color: var(--card-bg-color); border-radius: var(--border-radius-m); box-shadow: var(--shadow-light); margin-bottom: 1.5rem; overflow: hidden; }
-    .card-header { padding: 0.75rem 1.5rem; background-color: #f9f9f9; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 1.1rem; }
-    .card-body { padding: 1.5rem; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { padding: 0.75rem 0; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-    table tr:last-child > td { border-bottom: none; }
-    th { color: var(--text-secondary); font-weight: 500; font-size: 0.9rem; padding-right: 1rem; white-space: nowrap; }
-    input[type="text"], input[type="number"], input[type="date"], select { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid var(--border-color); border-radius: var(--border-radius-s); font-size: 1rem; font-family: var(--font-stack); background-color: #fff; }
-    input:disabled, select:disabled { background-color: var(--input-bg); cursor: not-allowed; color: var(--text-secondary); }
-    input[readonly] { background-color: var(--input-bg); cursor: default; font-weight: 600; border-style: dashed; }
-    button { background-color: var(--brand-blue); color: white; padding: 0.6rem 1.25rem; border: none; cursor: pointer; font-size: 0.95rem; font-weight: 500; border-radius: var(--border-radius-s); transition: background-color 0.2s; }
-    button:disabled { background-color: #ccc; cursor: not-allowed; }
-    .print-btn { background-color: var(--brand-green); }
-    .action-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
-    
-    #printSection { display: none; }
-    @media print {
-      body { background: #fff; margin: 0; font-family: Arial, sans-serif; font-size: 10pt; color: #333; }
-      .container { max-width: 100%; width: 18cm; margin: auto; padding: 0; }
-      #recoveryForm, .action-buttons, #status-message, .main-header, #timeRestrictionMessage { display: none; }
-      #printSection { display: block !important; }
-      .print-header { text-align: center; margin-bottom: 1.5cm; }
-      .print-header h1 { font-size: 18pt; margin: 0; color: #000; }
-      .print-header p { font-size: 11pt; margin-top: 5px; color: #666; }
-      .print-fieldset { border: 1px solid #aaa; padding: 10px 15px 15px 15px; margin-bottom: 0.75cm; }
-      .print-fieldset legend { font-weight: bold; font-size: 11pt; padding: 0 5px; color: #000; }
-      .print-table { width: 100%; border-collapse: collapse; }
-      .print-table td { padding: 5px 0; vertical-align: middle; font-size: 10pt; }
-      .print-table td:first-child { width: 50%; }
-      .print-value { border: 1px solid #ccc; padding: 4px 8px; min-height: 28px; text-align: right; }
-      .print-value.text { text-align: left; }
-      .print-value.bold { font-weight: bold; }
-      #print-loan-details { margin-top: 10px; }
-      #print-loan-details table { width: 100%; font-size: 9pt; border-collapse: collapse; }
-      #print-loan-details th, #print-loan-details td { border: 1px solid #ccc; padding: 4px; text-align: left; }
-      #print-loan-details th { background-color: #f2f2f2; font-weight: bold; }
-      #print-loan-details td:nth-child(2) { text-align: right; }
-      #print-loan-details td:nth-child(3) { width: 10%; }
+
+    /* --- General Styles --- */
+    *, *::before, *::after {
+      box-sizing: border-box;
     }
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      font-family: var(--font-stack);
+      background-color: var(--bg-color);
+      margin: 0;
+      padding: 1.5rem;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* --- Header --- */
+    .main-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .main-header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin: 0 0 0.25rem 0;
+    }
+    .main-header p {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* --- Card Layout --- */
+    .card {
+      background-color: var(--card-bg-color);
+      border-radius: var(--border-radius-m);
+      box-shadow: var(--shadow-light);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 1rem 1.5rem;
+      background-color: #f9fafb;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+      font-size: 1.15rem;
+    }
+    .card-body {
+      padding: 1.5rem;
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    /* --- Form Elements --- */
+    .form-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 1rem;
+    }
+    .form-group label {
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    input[type="text"], input[type="number"], input[type="date"], select {
+      width: 100%;
+      padding: 0.7rem 0.8rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 1rem;
+      font-family: var(--font-stack);
+      background-color: #fff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--brand-blue);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+    }
+    input:read-only {
+      background-color: var(--input-bg);
+      font-weight: 600;
+      border-style: dashed;
+    }
+    input:disabled, select:disabled {
+      background-color: var(--input-bg);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    /* --- Loan Details Table --- */
+    #loan-details-section {
+        border-top: 1px solid var(--border-color);
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    #loanTable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    #loanTable th, #loanTable td {
+        padding: 0.5rem;
+        text-align: left;
+    }
+    #loanTable th {
+        color: var(--text-secondary);
+        font-weight: 500;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.8rem;
+    }
+    #loanTable input { padding: 0.5rem; }
+    .remove-loan-btn {
+        background: none;
+        border: none;
+        color: var(--brand-red);
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    .add-loan-btn {
+        background-color: #e9ecef;
+        color: var(--text-primary);
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        font-size: 0.9rem;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+        float: right;
+        margin-top: 10px;
+    }
+    .add-loan-btn:hover { background-color: #ced4da; }
+
+    /* --- Action Buttons & Messages --- */
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 6px;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background-color: var(--brand-blue); color: white; }
+    .btn-primary:hover { background-color: #0056b3; }
+    .btn-secondary { background-color: var(--brand-green); color: white; }
+    .btn-secondary:hover { background-color: #2ca048; }
+    .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+    #status-message {
+        text-align: center;
+        margin-top: 1rem;
+        font-weight: bold;
+        padding: 0.8rem;
+        border-radius: 6px;
+    }
+    .status-success { color: var(--brand-green); background-color: #e8f8ee; }
+    .status-error { color: var(--brand-red); background-color: #ffebee; }
+
+    /* ------------------------------------------- */
+    /* ---         PRINT STYLES START          --- */
+    /* ------------------------------------------- */
+    
+    /* This part is hidden on screen and only visible when printing */
+    #printSection {
+      display: none;
+    }
+
+    @media print {
+      /* --- General Print Setup --- */
+      body {
+        background: #fff;
+        margin: 0;
+        padding: 0;
+        font-family: 'Arial', sans-serif;
+        font-size: 10pt;
+        color: #000;
+      }
+      .container {
+        max-width: 100%;
+        width: 18cm; /* Standard A4 width with margins */
+        margin: auto;
+        padding: 0;
+        box-shadow: none;
+      }
+
+      /* --- Hide everything EXCEPT the print section --- */
+      #recoveryForm, .action-buttons, #status-message, .main-header, #timeRestrictionMessage {
+        display: none !important;
+      }
+      #printSection {
+        display: block !important;
+      }
+
+      /* --- Print Layout Styling --- */
+      .print-header {
+        text-align: center;
+        margin-bottom: 1.5cm;
+      }
+      .print-header h1 {
+        font-size: 18pt;
+        margin: 0;
+        color: #000;
+        font-weight: bold;
+      }
+      .print-header p {
+        font-size: 11pt;
+        margin-top: 5px;
+        color: #444;
+      }
+      .print-fieldset {
+        border: 1px solid #999;
+        padding: 10px 15px 15px 15px;
+        margin-bottom: 0.75cm;
+      }
+      .print-fieldset legend {
+        font-weight: bold;
+        font-size: 11pt;
+        padding: 0 8px;
+        color: #000;
+      }
+      .print-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .print-table td {
+        padding: 6px 0;
+        vertical-align: middle;
+        font-size: 10pt;
+      }
+      .print-table td:first-child {
+        width: 60%;
+        padding-right: 15px;
+      }
+      .print-value {
+        text-align: right;
+        font-family: 'Consolas', 'Courier New', monospace;
+      }
+      .print-value.text {
+        text-align: left;
+        font-family: 'Arial', sans-serif;
+      }
+      .bold {
+        font-weight: bold;
+      }
+
+      /* Loan details table in print */
+      #print-loan-details-container {
+          margin-top: 10px;
+          margin-bottom: 10px;
+      }
+      #print-loan-details-container table {
+          width: 100%;
+          font-size: 9pt;
+          border-collapse: collapse;
+      }
+      #print-loan-details-container th,
+      #print-loan-details-container td {
+          border: 1px solid #ccc;
+          padding: 5px;
+          text-align: left;
+      }
+      #print-loan-details-container th {
+          background-color: #f2f2f2;
+          font-weight: bold;
+      }
+      #print-loan-details-container td:nth-child(2) {
+          text-align: right;
+      }
+      .no-offline-msg {
+          text-align: center;
+          font-style: italic;
+          font-size: 9pt;
+          color: #888;
+          padding: 10px;
+          border: 1px dashed #ccc;
+      }
+    }
+    /* ---         PRINT STYLES END            --- */
+    /* ------------------------------------------- */
   </style>
 </head>
 <body>
-
   <main class="container">
     <header class="main-header">
       <h1>अनिक फायनान्सीयल सर्वीसेस</h1>
       <p>दैनंदिन रिकवरी रेकॉर्ड तपशील</p>
     </header>
-
-    <div id="timeRestrictionMessage" style="display: none; text-align: center; background-color: var(--card-bg-color); padding: 2rem; border-radius: var(--border-radius-m); box-shadow: var(--shadow-light);">
-      <h2 style="color: var(--brand-red);">फॉर्म सध्या बंद आहे</h2>
-      <p style="color: var(--text-secondary); font-size: 1.1rem;">ही सुविधा फक्त सकाळी ६ ते संध्याकाळी ५ या वेळेत उपलब्ध असते.</p>
-      <p>कृपया योग्य वेळेत पुन्हा प्रयत्न करा.</p>
-    </div>
     
     <form id="recoveryForm" onsubmit="submitReport(event)">
-      <section class="card"><div class="card-body"><table><tr><th>युनिट</th><td> <select id="unitName" onchange="populateStaffNames()" required disabled><option value="">युनिट लोड होत आहे...</option></select></td></tr><tr><th>स्टाफचे नांव</th><td> <select id="staffName" onchange="checkForDuplicatesAndUpdateUI()" required disabled><option value="">आधी युनिट निवडा</option></select></td></tr><tr><th>दिनांक</th><td><input type="date" id="reportDate" onchange="checkForDuplicatesAndUpdateUI()" required></td></tr></table></div></section>
+      <!-- Card 1: Basic Info -->
+      <section class="card">
+        <div class="card-body">
+          <div class="form-group">
+            <label for="unitName">युनिट</label>
+            <select id="unitName" onchange="populateStaffNames()" required disabled><option value="">युनिट लोड होत आहे...</option></select>
+          </div>
+          <div class="form-group">
+            <label for="staffName">स्टाफचे नांव</label>
+            <select id="staffName" onchange="checkForDuplicatesAndUpdateUI()" required disabled><option value="">आधी युनिट निवडा</option></select>
+          </div>
+          <div class="form-group">
+            <label for="reportDate">दिनांक</label>
+            <input type="date" id="reportDate" onchange="checkForDuplicatesAndUpdateUI()" required>
+          </div>
+        </div>
+      </section>
       
       <div id="form-body">
-        <section class="card"><header class="card-header">एकूण वसुली तपशील</header><div class="card-body"><table><tr><td>आजची एकूण ऑनलाइन रिकवरी (A)</td><td><input type="number" id="onlineRecovery" placeholder="0.00" step="0.01" /></td></tr><tr><td>आजची एकूण ऑफलाईन रिकवरी (B)</td><td><input type="number" id="offlineRecoveryTotal" readonly placeholder="0.00" /></td></tr><tr><td colspan="2"><table id="loanTable"><thead><tr><th>कर्ज क्र.</th><th>रक्कम (₹)</th><th>कृती</th></tr></thead><tbody></tbody></table><div style="text-align:right; padding-top:10px;"><button type="button" onclick="addLoanRow()">+ नवीन कर्ज जोडा</button></div></td></tr><tr><td>एकूण रिकवरी (C = A+B)</td><td><input type="number" id="totalRecovery" readonly placeholder="0.00" /></td></tr><tr><td>प्रारंभीची शिल्लक (D)</td><td><input type="number" id="openingAmount" placeholder="0.00" readonly /></td></tr><tr><td>एकूण रक्कम (E = C+D)</td><td><input type="number" id="totalAmount" readonly placeholder="0.00" /></td></tr></table></div></section>
-        <section class="card"><header class="card-header">वरील रक्कमेची फोड</header><div class="card-body"><table><tr><td>स्टेट बॅंकेत भरणा (A)</td><td><input type="number" id="sbiAmount" placeholder="0.00" step="0.01"/></td></tr><tr><td>महा ग्रामीणमध्ये भरणा (B)</td><td><input type="number" id="mgbAmount" placeholder="0.00" step="0.01"/></td></tr><tr><td>फोनपे QR (C)</td><td><input type="number" id="phonePayAmount" placeholder="0.00" step="0.01"/></td></tr><tr><td>AutoPay (D)</td><td><input type="number" id="otherBankAmount" placeholder="0.00" step="0.01"/></td></tr><tr><td>वरीष्ठांकडे जमा (E)</td><td><input type="number" id="cashsr" placeholder="0.00" step="0.01"/></td></tr><tr><td>ऑफिस मध्ये जमा (F)</td><td><input type="number" id="officeAmount" placeholder="0.00" step="0.01"/></td></tr><tr><td>हातावर शिल्लक (G)</td><td><input type="number" id="cashInHandAmount" placeholder="0.00" step="0.01"/></td></tr><tr><td>एकूण फोड (A ते G)</td><td><input type="number" id="totalBreakdown" readonly placeholder="0.00" /></td></tr><tr><td>तफावत (E - एकूण फोड)</td><td><input type="number" id="difference" readonly placeholder="0.00" /></td></tr></table></div></section>
+        <!-- Card 2: Recovery Details -->
+        <section class="card">
+          <header class="card-header">एकूण वसुली तपशील</header>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="onlineRecovery">आजची एकूण ऑनलाइन रिकवरी (A)</label>
+              <input type="number" id="onlineRecovery" placeholder="0.00" step="0.01" />
+            </div>
+            <div class="form-group">
+              <label for="offlineRecoveryTotal">आजची एकूण ऑफलाईन रिकवरी (B)</label>
+              <input type="number" id="offlineRecoveryTotal" readonly placeholder="0.00" />
+            </div>
+            
+            <div id="loan-details-section">
+                <table id="loanTable">
+                    <thead><tr><th>कर्ज क्र.</th><th>रक्कम (₹)</th><th>कृती</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+                <button type="button" class="add-loan-btn" onclick="addLoanRow()">+ नवीन कर्ज जोडा</button>
+            </div>
+
+            <div class="form-group">
+              <label for="totalRecovery">एकूण रिकवरी (C = A+B)</label>
+              <input type="number" id="totalRecovery" readonly placeholder="0.00" />
+            </div>
+            <div class="form-group">
+              <label for="openingAmount">प्रारंभीची शिल्लक (D)</label>
+              <input type="number" id="openingAmount" placeholder="0.00" readonly />
+            </div>
+            <div class="form-group">
+              <label for="totalAmount">एकूण रक्कम (E = C+D)</label>
+              <input type="number" id="totalAmount" readonly placeholder="0.00" />
+            </div>
+          </div>
+        </section>
+        
+        <!-- Card 3: Cash Breakdown -->
+        <section class="card">
+          <header class="card-header">वरील रक्कमेची फोड</header>
+          <div class="card-body">
+            <div class="form-group"><label for="sbiAmount">स्टेट बॅंकेत भरणा (A)</label><input type="number" id="sbiAmount" placeholder="0.00" step="0.01"/></div>
+            <div class="form-group"><label for="mgbAmount">महा ग्रामीणमध्ये भरणा (B)</label><input type="number" id="mgbAmount" placeholder="0.00" step="0.01"/></div>
+            <div class="form-group"><label for="phonePayAmount">फोनपे QR (C)</label><input type="number" id="phonePayAmount" placeholder="0.00" step="0.01"/></div>
+            <div class="form-group"><label for="otherBankAmount">AutoPay (D)</label><input type="number" id="otherBankAmount" placeholder="0.00" step="0.01"/></div>
+            <div class="form-group"><label for="cashsr">वरीष्ठांकडे जमा (E)</label><input type="number" id="cashsr" placeholder="0.00" step="0.01"/></div>
+            <div class="form-group"><label for="officeAmount">ऑफिस मध्ये जमा (F)</label><input type="number" id="officeAmount" placeholder="0.00" step="0.01"/></div>
+            <div class="form-group"><label for="cashInHandAmount">हातावर शिल्लक (G)</label><input type="number" id="cashInHandAmount" placeholder="0.00" step="0.01"/></div>
+            <div class="form-group"><label for="totalBreakdown">एकूण फोड (A ते G)</label><input type="number" id="totalBreakdown" readonly placeholder="0.00" /></div>
+            <div class="form-group"><label for="difference">तफावत (E - एकूण फोड)</label><input type="number" id="difference" readonly placeholder="0.00" /></div>
+          </div>
+        </section>
       </div>
 
       <div class="action-buttons">
-        <button type="submit" id="submitBtn">रिपोर्ट जतन करा</button>
-        <button type="button" id="printBtn" class="print-btn" onclick="window.print()" disabled>रिपोर्ट प्रिंट करा</button>
+        <button type="submit" id="submitBtn" class="btn btn-primary">रिपोर्ट जतन करा</button>
+        <button type="button" id="printBtn" class="btn btn-secondary" onclick="window.print()" disabled>रिपोर्ट प्रिंट करा</button>
       </div>
-      <div id="status-message" style="text-align:center; margin-top:1rem; font-weight:bold;"></div>
+      <div id="status-message"></div>
     </form>
 
-    <!-- हा विभाग मुख्य कंटेनरच्या आत आणि फॉर्मच्या नंतर येतो -->
+    <!-- ======================================================= -->
+    <!-- !!         PRINT SECTION - HIDDEN ON SCREEN        !! -->
+    <!-- ======================================================= -->
     <div id="printSection">
-      <div class="print-header"><h1>अनिक फायनान्सीयल सर्वीसेस</h1><p>दैनंदिन रिकवरी रेकॉर्ड तपशील</p></div>
-      <table class="print-table" style="margin-bottom: 0.75cm; border: 1px solid #aaa; padding: 10px 15px;">
-        <tr><td>स्टाफचे नांव</td><td><div class="print-value text" id="print-staffName"></div></td></tr>
-        <tr><td>दिनांक</td><td><div class="print-value text" id="print-date"></div></td></tr>
-      </table>
-      <fieldset class="print-fieldset"><legend>एकूण वसुली तपशील (Recovery Details)</legend>
+      <div class="print-header">
+        <h1>अनिक फायनान्सीयल सर्वीसेस</h1>
+        <p>दैनंदिन रिकवरी रेकॉर्ड तपशील</p>
+      </div>
+
+      <fieldset class="print-fieldset">
+        <legend>General Details</legend>
+        <table class="print-table">
+          <tr><td>स्टाफचे नांव</td><td><div class="print-value text bold" id="print-staffName"></div></td></tr>
+          <tr><td>दिनांक</td><td><div class="print-value text" id="print-date"></div></td></tr>
+        </table>
+      </fieldset>
+
+      <fieldset class="print-fieldset">
+        <legend>एकूण वसुली तपशील (Recovery Details)</legend>
         <table class="print-table">
           <tr><td>आजची एकूण ऑनलाइन रिकवरी (A)</td><td><div class="print-value" id="print-onlineRecovery"></div></td></tr>
           <tr><td>आजची एकूण ऑफलाईन रिकवरी (B)</td><td><div class="print-value" id="print-offlineRecoveryTotal"></div></td></tr>
         </table>
-        <div id="print-loan-details"></div>
+        
+        <div id="print-loan-details-container"></div>
+        
         <table class="print-table" style="margin-top: 10px;">
           <tr><td>एकूण रिकवरी (C = A+B)</td><td><div class="print-value bold" id="print-totalRecovery"></div></td></tr>
           <tr><td>प्रारंभीची शिल्लक रक्कम (D)</td><td><div class="print-value" id="print-openingAmount"></div></td></tr>
           <tr><td>एकूण रक्कम (E = C+D)</td><td><div class="print-value bold" id="print-totalAmount"></div></td></tr>
         </table>
       </fieldset>
-      <fieldset class="print-fieldset"><legend>वरील रक्कमेची फोड (Cash Breakdown)</legend>
+      
+      <fieldset class="print-fieldset">
+        <legend>वरील रक्कमेची फोड (Cash Breakdown)</legend>
         <table class="print-table">
           <tr><td>स्टेट बँकेत भरणा (A)</td><td><div class="print-value" id="print-sbiAmount"></div></td></tr>
           <tr><td>महा ग्रामीणमध्ये भरणा (B)</td><td><div class="print-value" id="print-mgbAmount"></div></td></tr>
           <tr><td>फोनपे QR (C)</td><td><div class="print-value" id="print-phonePayAmount"></div></td></tr>
-          <tr><td>अॅटो डेबिट (D)</td><td><div class="print-value" id="print-otherBankAmount"></div></td></tr>
+          <tr><td>ऑटो डेबिट (D)</td><td><div class="print-value" id="print-otherBankAmount"></div></td></tr>
           <tr><td>वरीष्ठांकडे जमा (E)</td><td><div class="print-value" id="print-cashsr"></div></td></tr>
           <tr><td>ऑफिस मध्ये जमा (F)</td><td><div class="print-value" id="print-officeAmount"></div></td></tr>
           <tr><td>हातावर शिल्लक (G)</td><td><div class="print-value" id="print-cashInHandAmount"></div></td></tr>
-          <tr><td><strong>एकूण फोड (A ते G)</strong></td><td><div class="print-value bold" id="print-totalBreakdown"></div></td></tr>
-          <tr><td><strong>तफावत (E - एकूण फोड)</strong></td><td><div class="print-value bold" id="print-difference"></div></td></tr>
+          <tr><td class="bold">एकूण फोड (A ते G)</td><td><div class="print-value bold" id="print-totalBreakdown"></div></td></tr>
+          <tr><td class="bold">तफावत (E - एकूण फोड)</td><td><div class="print-value bold" id="print-difference"></div></td></tr>
         </table>
       </fieldset>
     </div>
   </main>
-
+  
   <script>
+    // --- Configuration ---
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbynDdxBV_2MdsTNMdFJvWGC9sXZXUn0QtgCh_RbN_jD1Sb4QoX58v1w7IGRRz8Bots/exec";
-    const API_KEY = "AIzaSyAQQZz2KDKZtJw7YZBRAvHaO-Uy68Ps57s";
-    const SHEET_ID = "1FJQ7fd__PRnHTDjfvOPWSwGo2_w-S-4sx1mcpRTVskk";
+    const API_KEY = "AIzaSyAQQZz2KDKZtJw7YZBRAvHaO-Uy68Ps57s"; // Replace with your actual API key
+    const SHEET_ID = "1FJQ7fd__PRnHTDjfvOPWSwGo2_w-S-4sx1mcpRTVskk"; // Replace with your Sheet ID
     const STAFF_SHEET_NAME = "StaffList";
     const REPORTS_SHEET_NAME = "Recovery Data";
+    
+    // --- Global Variables ---
     let staffData = {};
     let allReports = [];
 
+    // --- Core Functions ---
     function toggleMainForm(enable) {
       const formBody = document.getElementById('form-body');
       const elements = formBody.querySelectorAll('input, button');
@@ -143,13 +475,15 @@
 
     function isDuplicate(staffName, reportDateStr) {
       if (!staffName || !reportDateStr) return false;
-      const dateToCompare = new Date(reportDateStr).toLocaleString('en-CA');
+      const dateToCompare = new Date(reportDateStr).toLocaleDateString('en-CA');
       return allReports.some(report => {
         if (!report[0] || !report[2]) return false;
-        const dateParts = report[0].split('/');
-        const sheetDate = dateParts.length === 3 ? new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]) : new Date(report[0]);
-        const sheetDateStr = sheetDate.toLocaleDateString('en-CA');
-        return sheetDateStr === dateToCompare && report[2] === staffName;
+        try {
+            const dateParts = report[0].split('/');
+            const sheetDate = dateParts.length === 3 ? new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]) : new Date(report[0]);
+            const sheetDateStr = sheetDate.toLocaleDateString('en-CA');
+            return sheetDateStr === dateToCompare && report[2] === staffName;
+        } catch (e) { return false; }
       });
     }
 
@@ -157,12 +491,14 @@
       const staffName = document.getElementById('staffName').value;
       const reportDate = document.getElementById('reportDate').value;
       const statusDiv = document.getElementById('status-message');
+      statusDiv.textContent = '';
+      statusDiv.className = '';
+      
       if (isDuplicate(staffName, reportDate)) {
         statusDiv.textContent = 'या स्टाफचा या तारखेचा रिपोर्ट आधीच सबमिट झाला आहे.';
-        statusDiv.style.color = 'var(--brand-red)';
+        statusDiv.className = 'status-error';
         toggleMainForm(false);
       } else {
-        statusDiv.textContent = '';
         toggleMainForm(true);
         fetchOpeningBalance();
       }
@@ -171,7 +507,11 @@
     function toggleFormLock(lock) {
       const form = document.getElementById('recoveryForm');
       const elements = form.querySelectorAll('input, select, button');
-      elements.forEach(el => { if (el.id !== 'submitBtn' && el.id !== 'printBtn') { el.disabled = lock; } });
+      elements.forEach(el => {
+        if (el.id !== 'submitBtn' && el.id !== 'printBtn') {
+          el.disabled = lock;
+        }
+      });
     }
     
     function resetFormForNewEntry() {
@@ -182,13 +522,17 @@
         loanTbody.innerHTML = '';
         addLoanRow();
         document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('status-message').textContent = '';
+        const statusDiv = document.getElementById('status-message');
+        statusDiv.textContent = '';
+        statusDiv.className = '';
         document.getElementById('printBtn').disabled = true;
-        document.getElementById('submitBtn').textContent = 'रिपोर्ट जतन करा';
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.textContent = 'रिपोर्ट जतन करा';
+        submitBtn.disabled = false;
+        document.getElementById('unitName').value = '';
         const staffSelect = document.getElementById('staffName');
         staffSelect.innerHTML = '<option value="">आधी युनिट निवडा</option>';
         staffSelect.disabled = true;
-        document.getElementById('unitName').selectedIndex = 0;
         toggleMainForm(true);
         calculateAllTotals();
     }
@@ -208,50 +552,107 @@
         const reportDateStr = document.getElementById('reportDate').value;
         
         if (isDuplicate(staffName, reportDateStr)) { alert("हा रिपोर्ट आधीच सबमिट झाला आहे. तुम्ही नवीन माहिती जतन करू शकत नाही."); return; }
-        if (getFloatValue("difference").toFixed(2) !== '0.00' && getFloatValue("difference").toFixed(2) !== '-0.00') { alert("तफावत (Difference) 0 नाही."); return; }
+        const difference = getFloatValue("difference");
+        if (Math.abs(difference) > 0.001) { alert("तफावत (Difference) 0 नाही. कृपया रकमा तपासा."); return; }
         if (!staffName) { alert("कृपया स्टाफचे नाव निवडा."); return; }
 
-        submitBtn.disabled = true; 
-        printBtn.disabled = true; 
-        submitBtn.textContent = "जतन होत आहे..."; 
+        submitBtn.disabled = true;
+        printBtn.disabled = true;
+        submitBtn.textContent = "जतन होत आहे...";
         statusDiv.textContent = "";
+        statusDiv.className = "";
         
-        const reportData = { reportDate: reportDateStr, staffName, unitName: document.getElementById('unitName').value, openingAmount: getFloatValue('openingAmount'), onlineRecovery: getFloatValue('onlineRecovery'), offlineRecoveryTotal: getFloatValue('offlineRecoveryTotal'), totalRecovery: getFloatValue('totalRecovery'), totalAmount: getFloatValue('totalAmount'), sbiAmount: getFloatValue('sbiAmount'), mgbAmount: getFloatValue('mgbAmount'), phonePayAmount: getFloatValue('phonePayAmount'), otherBankAmount: getFloatValue('otherBankAmount'), cashsr: getFloatValue('cashsr'), officeAmount: getFloatValue('officeAmount'), cashInHandAmount: getFloatValue('cashInHandAmount') };
+        const reportData = {
+            reportDate: reportDateStr,
+            unitName: document.getElementById('unitName').value,
+            staffName,
+            openingAmount: getFloatValue('openingAmount'),
+            onlineRecovery: getFloatValue('onlineRecovery'),
+            offlineRecoveryTotal: getFloatValue('offlineRecoveryTotal'),
+            totalRecovery: getFloatValue('totalRecovery'),
+            totalAmount: getFloatValue('totalAmount'),
+            sbiAmount: getFloatValue('sbiAmount'),
+            mgbAmount: getFloatValue('mgbAmount'),
+            phonePayAmount: getFloatValue('phonePayAmount'),
+            otherBankAmount: getFloatValue('otherBankAmount'),
+            cashsr: getFloatValue('cashsr'),
+            officeAmount: getFloatValue('officeAmount'),
+            cashInHandAmount: getFloatValue('cashInHandAmount')
+        };
         
         try {
-            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(reportData) });
-            statusDiv.textContent = "रिपोर्ट यशस्वीरित्या जतन झाला. तुम्ही आता प्रिंट घेऊ शकता."; 
-            statusDiv.style.color = 'var(--brand-green)';
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Important for simple POST requests to Google Apps Script
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reportData)
+            });
+            statusDiv.textContent = "रिपोर्ट यशस्वीरित्या जतन झाला. तुम्ही आता प्रिंट घेऊ शकता.";
+            statusDiv.className = 'status-success';
             populatePrintSection(reportData);
             toggleFormLock(true);
             printBtn.disabled = false;
             submitBtn.textContent = "नवीन रिपोर्ट भरा";
             submitBtn.disabled = false;
-            await loadInitialData();
+            await loadInitialData(); // Refresh data to include the new report
         } catch (error) {
-            statusDiv.textContent = "त्रुटी: रिपोर्ट जतन झाला नाही."; 
-            statusDiv.style.color = 'var(--brand-red)';
-            console.error(error); 
-            submitBtn.disabled = false; 
+            statusDiv.textContent = "त्रुटी: रिपोर्ट जतन झाला नाही. कृपया पुन्हा प्रयत्न करा.";
+            statusDiv.className = 'status-error';
+            console.error("Submission Error:", error);
+            submitBtn.disabled = false;
             submitBtn.textContent = "पुन्हा प्रयत्न करा";
         }
     }
     
     function populatePrintSection(data) {
-        const setVal = (id, value, isText = false) => { const el = document.getElementById(id); el.textContent = value; if(isText) el.classList.add('text'); else el.classList.remove('text'); };
-        const f = (num) => (typeof num === 'number' ? num.toFixed(2) : '0.00');
-        setVal('print-staffName', data.staffName, true); setVal('print-date', new Date(data.reportDate).toLocaleDateString('en-GB'), true);
-        setVal('print-onlineRecovery', f(data.onlineRecovery)); setVal('print-offlineRecoveryTotal', f(data.offlineRecoveryTotal)); setVal('print-totalRecovery', f(data.totalRecovery)); setVal('print-openingAmount', f(data.openingAmount)); setVal('print-totalAmount', f(data.totalAmount)); setVal('print-sbiAmount', f(data.sbiAmount)); setVal('print-mgbAmount', f(data.mgbAmount)); setVal('print-phonePayAmount', f(data.phonePayAmount)); setVal('print-otherBankAmount', f(data.otherBankAmount)); setVal('print-cashsr', f(data.cashsr)); setVal('print-officeAmount', f(data.officeAmount)); setVal('print-cashInHandAmount', f(data.cashInHandAmount));
-        const totalBreakdown = [data.sbiAmount, data.mgbAmount, data.phonePayAmount, data.otherBankAmount, data.cashsr, data.officeAmount, data.cashInHandAmount].reduce((a, b) => a + b, 0);
-        setVal('print-totalBreakdown', f(totalBreakdown)); setVal('print-difference', f(data.totalAmount - totalBreakdown));
+        const setVal = (id, value) => { document.getElementById(id).textContent = value; };
+        const formatNum = (num) => (typeof num === 'number' ? num.toFixed(2) : '0.00');
+
+        setVal('print-staffName', data.staffName);
+        setVal('print-date', new Date(data.reportDate).toLocaleDateString('en-GB'));
+        
+        // Recovery Details
+        setVal('print-onlineRecovery', formatNum(data.onlineRecovery));
+        setVal('print-offlineRecoveryTotal', formatNum(data.offlineRecoveryTotal));
+        setVal('print-totalRecovery', formatNum(data.totalRecovery));
+        setVal('print-openingAmount', formatNum(data.openingAmount));
+        setVal('print-totalAmount', formatNum(data.totalAmount));
+
+        // Breakdown
+        setVal('print-sbiAmount', formatNum(data.sbiAmount));
+        setVal('print-mgbAmount', formatNum(data.mgbAmount));
+        setVal('print-phonePayAmount', formatNum(data.phonePayAmount));
+        setVal('print-otherBankAmount', formatNum(data.otherBankAmount));
+        setVal('print-cashsr', formatNum(data.cashsr));
+        setVal('print-officeAmount', formatNum(data.officeAmount));
+        setVal('print-cashInHandAmount', formatNum(data.cashInHandAmount));
+
+        const totalBreakdown = [data.sbiAmount, data.mgbAmount, data.phonePayAmount, data.otherBankAmount, data.cashsr, data.officeAmount, data.cashInHandAmount].reduce((a, b) => a + (b || 0), 0);
+        setVal('print-totalBreakdown', formatNum(totalBreakdown));
+        setVal('print-difference', formatNum(data.totalAmount - totalBreakdown));
+
+        // Loan Details Table for Print
         const loanRows = document.querySelectorAll('#loanTable tbody tr');
-        let loanTableHTML = `<table><thead><tr><th>कर्ज क्रमांक</th><th>रक्कम (₹)</th><th>कृती</th></tr></thead><tbody>`;
+        let loanTableHTML = '';
         let hasOfflineData = false;
         loanRows.forEach(row => {
-            const loanNo = row.cells[0].querySelector('input').value; const amount = parseFloat(row.cells[1].querySelector('input').value || 0);
-            if (loanNo || amount > 0) { loanTableHTML += `<tr><td>${loanNo || '-'}</td><td>${f(amount)}</td><td></td></tr>`; hasOfflineData = true; }
+            const loanNo = row.cells[0].querySelector('input').value;
+            const amount = parseFloat(row.cells[1].querySelector('input').value || 0);
+            if (loanNo.trim() || amount > 0) {
+                if (!hasOfflineData) {
+                    loanTableHTML += `<table><thead><tr><th>कर्ज क्रमांक</th><th>रक्कम (₹)</th></tr></thead><tbody>`;
+                    hasOfflineData = true;
+                }
+                loanTableHTML += `<tr><td>${loanNo || '-'}</td><td>${formatNum(amount)}</td></tr>`;
+            }
         });
-        document.getElementById('print-loan-details').innerHTML = hasOfflineData ? loanTableHTML + '</tbody></table>' : '<p style="text-align:center; font-style:italic; font-size:9pt; color:#888;">ऑफलाईन रिकवरी नाही.</p>';
+
+        if(hasOfflineData) {
+            loanTableHTML += '</tbody></table>';
+        } else {
+            loanTableHTML = '<div class="no-offline-msg">ऑफलाईन रिकवरी नाही.</div>';
+        }
+        document.getElementById('print-loan-details-container').innerHTML = loanTableHTML;
     }
 
     async function loadInitialData() {
@@ -260,56 +661,106 @@
         try {
             const [staffResponse, reportsResponse] = await Promise.all([ fetch(staffUrl), fetch(reportsUrl) ]);
             if (!staffResponse.ok || !reportsResponse.ok) throw new Error(`API call failed.`);
-            const staffJson = await staffResponse.json(); const reportsJson = await reportsResponse.json();
+            
+            const staffJson = await staffResponse.json();
+            const reportsJson = await reportsResponse.json();
+            
             staffData = {};
-            (staffJson.values || []).slice(1).forEach(row => { const unit = row[0]; const name = row[1]; if (!staffData[unit]) staffData[unit] = []; staffData[unit].push(name); });
-            allReports = reportsJson.values ? reportsJson.values : [];
-            const unitSelect = document.getElementById('unitName'); const currentUnit = unitSelect.value;
+            (staffJson.values || []).slice(1).forEach(row => {
+              const unit = row[0]; const name = row[1];
+              if (unit && name) {
+                if (!staffData[unit]) staffData[unit] = [];
+                staffData[unit].push(name);
+              }
+            });
+
+            allReports = reportsJson.values ? reportsJson.values.slice(1) : [];
+            
+            const unitSelect = document.getElementById('unitName');
+            const currentUnit = unitSelect.value;
             unitSelect.innerHTML = '<option value="">युनिट निवडा</option>';
-            Object.keys(staffData).sort().forEach(unit => { unitSelect.innerHTML += `<option value="${unit}">${unit}</option>`; });
-            unitSelect.value = currentUnit; unitSelect.disabled = false;
-        } catch (error) { alert("डेटा लोड करण्यात अयशस्वी!"); console.error(error); }
+            Object.keys(staffData).sort().forEach(unit => {
+              unitSelect.innerHTML += `<option value="${unit}">${unit}</option>`;
+            });
+            unitSelect.value = currentUnit;
+            unitSelect.disabled = false;
+        } catch (error) {
+            alert("डेटा लोड करण्यात अयशस्वी! कृपया पेज रिफ्रेश करा.");
+            console.error("Data Load Error:", error);
+        }
     }
 
     function fetchOpeningBalance() {
-        const staffName = document.getElementById('staffName').value; const openingAmountInput = document.getElementById('openingAmount');
+        const staffName = document.getElementById('staffName').value;
+        const openingAmountInput = document.getElementById('openingAmount');
         openingAmountInput.value = "0.00";
         if (staffName && allReports.length > 0) {
-            for (let i = allReports.length - 1; i >= 0; i--) { if (allReports[i][2] === staffName) { openingAmountInput.value = parseFloat(allReports[i][14] || 0).toFixed(2); break; } }
+            // Search from last to first for the most recent entry
+            for (let i = allReports.length - 1; i >= 0; i--) {
+                if (allReports[i][2] === staffName) {
+                    openingAmountInput.value = parseFloat(allReports[i][14] || 0).toFixed(2);
+                    break;
+                }
+            }
         }
         calculateAllTotals();
     }
 
     function populateStaffNames() {
-        const selectedUnit = document.getElementById('unitName').value; const staffSelect = document.getElementById('staffName');
-        staffSelect.innerHTML = '<option value="">स्टाफ निवडा</option>'; staffSelect.disabled = true;
-        if (selectedUnit && staffData[selectedUnit]) { staffData[selectedUnit].sort().forEach(name => { staffSelect.innerHTML += `<option value="${name}">${name}</option>`; }); staffSelect.disabled = false; }
+        const selectedUnit = document.getElementById('unitName').value;
+        const staffSelect = document.getElementById('staffName');
+        staffSelect.innerHTML = '<option value="">स्टाफ निवडा</option>';
+        staffSelect.disabled = true;
+        if (selectedUnit && staffData[selectedUnit]) {
+            staffData[selectedUnit].sort().forEach(name => {
+              staffSelect.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+            staffSelect.disabled = false;
+        }
         checkForDuplicatesAndUpdateUI();
     }
     
+    // --- Utility and Calculation Functions ---
     function getFloatValue(id) { return parseFloat(document.getElementById(id).value) || 0; }
-    function addLoanRow() { const tbody = document.getElementById('loanTable').querySelector('tbody'); tbody.insertAdjacentHTML('beforeend', `<tr><td><input type="text"></td><td><input type="number" step="0.01"></td><td><button type="button" onclick="this.parentElement.parentElement.remove()">काढा</button></td></tr>`); }
-    function calculateAllTotals() { const offlineRecovery = Array.from(document.querySelectorAll('#loanTable tbody input[type=number]')).reduce((sum, el) => sum + (parseFloat(el.value) || 0), 0); document.getElementById('offlineRecoveryTotal').value = offlineRecovery.toFixed(2); const onlineRecovery = getFloatValue("onlineRecovery"); const openingAmount = getFloatValue("openingAmount"); const totalRecovery = onlineRecovery + offlineRecovery; const totalAmount = openingAmount + totalRecovery; document.getElementById('totalRecovery').value = totalRecovery.toFixed(2); document.getElementById('totalAmount').value = totalAmount.toFixed(2); const breakdownTotal = ['sbiAmount', 'mgbAmount', 'phonePayAmount', 'otherBankAmount', 'cashsr', 'officeAmount', 'cashInHandAmount'].reduce((sum, id) => sum + getFloatValue(id), 0); document.getElementById('totalBreakdown').value = breakdownTotal.toFixed(2); document.getElementById('difference').value = (totalAmount - breakdownTotal).toFixed(2); }
+    
+    function addLoanRow() {
+        const tbody = document.getElementById('loanTable').querySelector('tbody');
+        const newRow = tbody.insertRow();
+        newRow.innerHTML = `
+            <td><input type="text" placeholder="कर्ज क्र."></td>
+            <td><input type="number" step="0.01" placeholder="0.00"></td>
+            <td><button type="button" class="remove-loan-btn" onclick="this.closest('tr').remove(); calculateAllTotals();">&times;</button></td>
+        `;
+    }
+    
+    function calculateAllTotals() {
+        // 1. Calculate Offline Recovery from loan table
+        const offlineRecovery = Array.from(document.querySelectorAll('#loanTable tbody input[type=number]'))
+            .reduce((sum, el) => sum + (parseFloat(el.value) || 0), 0);
+        document.getElementById('offlineRecoveryTotal').value = offlineRecovery.toFixed(2);
+        
+        // 2. Calculate Total Recovery and Total Amount
+        const onlineRecovery = getFloatValue("onlineRecovery");
+        const openingAmount = getFloatValue("openingAmount");
+        const totalRecovery = onlineRecovery + offlineRecovery;
+        const totalAmount = openingAmount + totalRecovery;
+        document.getElementById('totalRecovery').value = totalRecovery.toFixed(2);
+        document.getElementById('totalAmount').value = totalAmount.toFixed(2);
 
-    const FORM_START_HOUR = 6; const FORM_END_HOUR = 17;
-    function checkTimeAndToggleForm() {
-      const formElement = document.getElementById('recoveryForm'); const messageElement = document.getElementById('timeRestrictionMessage'); const headerElement = document.querySelector('.main-header');
-      const now = new Date(); const currentHour = now.getHours();
-      if (currentHour < FORM_START_HOUR || currentHour >= FORM_END_HOUR) {
-        formElement.style.display = 'none'; messageElement.style.display = 'block'; headerElement.style.display = 'none';
-      } else {
-        formElement.style.display = 'block'; messageElement.style.display = 'none'; headerElement.style.display = 'block';
-      }
+        // 3. Calculate Total Breakdown and Difference
+        const breakdownIds = ['sbiAmount', 'mgbAmount', 'phonePayAmount', 'otherBankAmount', 'cashsr', 'officeAmount', 'cashInHandAmount'];
+        const breakdownTotal = breakdownIds.reduce((sum, id) => sum + getFloatValue(id), 0);
+        document.getElementById('totalBreakdown').value = breakdownTotal.toFixed(2);
+        document.getElementById('difference').value = (totalAmount - breakdownTotal).toFixed(2);
     }
 
+    // --- Page Load Initializer ---
     document.addEventListener('DOMContentLoaded', () => {
-      checkTimeAndToggleForm(); 
       loadInitialData(); 
-      document.getElementById('reportDate').value = new Date().toISOString().split('T')[0]; 
-      addLoanRow(); 
-      document.getElementById('recoveryForm').addEventListener('input', calculateAllTotals); 
+      document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+      addLoanRow();
+      document.getElementById('recoveryForm').addEventListener('input', calculateAllTotals);
     });
   </script>
-
 </body>
 </html>
