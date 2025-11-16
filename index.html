@@ -35,7 +35,6 @@
     .print-btn { background-color: var(--brand-green); }
     .action-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
     
-    /* !! महत्त्वाचे !! हे CSS नियम प्रिंट विभाग लपवतात आणि फक्त प्रिंट करताना दाखवतात */
     #printSection { display: none; }
     @media print {
       body { background: #fff; margin: 0; font-family: Arial, sans-serif; font-size: 10pt; color: #333; }
@@ -63,6 +62,7 @@
   </style>
 </head>
 <body>
+
   <main class="container">
     <header class="main-header">
       <h1>अनिक फायनान्सीयल सर्वीसेस</h1>
@@ -90,7 +90,7 @@
       <div id="status-message" style="text-align:center; margin-top:1rem; font-weight:bold;"></div>
     </form>
 
-    <!-- !! हा संपूर्ण विभाग स्क्रीनवर लपलेला असतो आणि फक्त प्रिंटमध्ये दिसतो !! -->
+    <!-- हा विभाग मुख्य कंटेनरच्या आत आणि फॉर्मच्या नंतर येतो -->
     <div id="printSection">
       <div class="print-header"><h1>अनिक फायनान्सीयल सर्वीसेस</h1><p>दैनंदिन रिकवरी रेकॉर्ड तपशील</p></div>
       <table class="print-table" style="margin-bottom: 0.75cm; border: 1px solid #aaa; padding: 10px 15px;">
@@ -124,7 +124,7 @@
       </fieldset>
     </div>
   </main>
-  
+
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbynDdxBV_2MdsTNMdFJvWGC9sXZXUn0QtgCh_RbN_jD1Sb4QoX58v1w7IGRRz8Bots/exec";
     const API_KEY = "AIzaSyAQQZz2KDKZtJw7YZBRAvHaO-Uy68Ps57s";
@@ -143,7 +143,7 @@
 
     function isDuplicate(staffName, reportDateStr) {
       if (!staffName || !reportDateStr) return false;
-      const dateToCompare = new Date(reportDateStr).toLocaleDateString('en-CA');
+      const dateToCompare = new Date(reportDateStr).toLocaleString('en-CA');
       return allReports.some(report => {
         if (!report[0] || !report[2]) return false;
         const dateParts = report[0].split('/');
@@ -310,5 +310,6 @@
       document.getElementById('recoveryForm').addEventListener('input', calculateAllTotals); 
     });
   </script>
+
 </body>
 </html>
