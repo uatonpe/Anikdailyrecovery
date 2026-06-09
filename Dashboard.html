@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="mr">
 <head>
@@ -85,6 +87,23 @@
         @keyframes slideIn { from {transform: translateY(-50px);} to {transform: translateY(0);} }
         .status-update-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,.2); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite; margin-left: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        .performance-panel { background: var(--card-bg-color); padding: 1rem 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; border-left: 5px solid var(--primary-color); }
+        .performance-panel label { font-weight: 600; color: var(--heading-color); }
+        .performance-panel input[type="date"] { padding: 0.65rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; }
+        .pp-btn { background-color: #6f42c1; color: white; border: none; padding: 0.8rem 1.4rem; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 700; transition: all 0.2s; }
+        .pp-btn:hover { background-color: #56349a; transform: translateY(-2px); }
+        .export-btn { background-color: var(--secondary-color); color: white; border: none; padding: 0.8rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; }
+        .small-note { font-size: 0.92rem; color: #666; width: 100%; }
+        .score-badge { padding: 5px 10px; border-radius: 999px; font-weight: 700; display: inline-block; min-width: 68px; text-align: center; }
+        .score-good { background:#eafaf1; color:var(--success-color); }
+        .score-bad { background:#f9ebea; color:var(--danger-color); }
+        .score-mid { background:#fff4e5; color:#b36b00; }
+        .pp-eligible { background:#d4edda !important; color:#155724; font-weight:700; }
+        .pp-not-eligible { background:#f8d7da !important; color:#721c24; font-weight:700; }
+        #staffPerformanceSection table { font-size: 0.92rem; }
+        #staffPerformanceSection th, #staffPerformanceSection td { padding: 0.7rem 0.6rem; text-align: center; }
+        #staffPerformanceSection td:first-child, #staffPerformanceSection th:first-child { text-align: left; }
     </style>
 </head>
 <body>
@@ -94,6 +113,16 @@
         <label for="dateFilter">दिनांक निवडा:</label>
         <input type="date" id="dateFilter">
         <button class="refresh-btn" onclick="loadDashboardData()">डेटा रिफ्रेश करा</button>
+    </div>
+
+    <div class="performance-panel">
+        <label for="perfFromDate">Staff Performance From:</label>
+        <input type="date" id="perfFromDate">
+        <label for="perfToDate">To:</label>
+        <input type="date" id="perfToDate">
+        <button class="pp-btn" onclick="renderStaffPerformanceReport()">📊 Staff Performance / PP Eligibility Report</button>
+        <button class="export-btn" onclick="exportStaffPerformanceCsv()">CSV Export</button>
+        <div class="small-note">मार्किंग: Direct 100% score. फक्त 3 मुद्दे: हातावर cash जास्त दिवस, report/recovery जुळला नाही, online recovery कमी. 90% किंवा अधिक असल्यास PP Eligible.</div>
     </div>
     <nav class="tabs" id="unitTabs"></nav>
     <div id="dashboard-content"></div>
@@ -119,12 +148,18 @@
     let staffList = [];
     let activeUnit = 'संपूर्ण';
     let currentFilteredData = { daily: [], highBalance: [], totalCash: [] };
+    let staffPerformanceData = [];
     
     const safeParseFloat = (str) => parseFloat(String(str).replace(/,/g, '')) || 0;
     const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(safeParseFloat(val));
 
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('dateFilter').value = new Date().toISOString().split('T')[0];
+        const todayIso = new Date().toISOString().split('T')[0];
+        document.getElementById('dateFilter').value = todayIso;
+        document.getElementById('perfToDate').value = todayIso;
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        document.getElementById('perfFromDate').value = monthStart.toISOString().split('T')[0];
         document.getElementById('dateFilter').addEventListener('change', () => renderDashboard(activeUnit));
         const modal = document.getElementById('detailsModal');
         const closeBtn = document.querySelector('.close-button');
@@ -203,6 +238,7 @@
         document.getElementById('dashboard-content').innerHTML = `
             <div class="kpi-cards" id="kpiCards"></div>
             <div class="kpi-cards" id="matchStatusKpis" style="margin-top: 1rem;"></div>
+            <div id="staffPerformanceSection" style="display:none;"></div>
             <div class="dashboard-grid">
                 <div class="chart-container"><div id="topCashInHandChart" style="height: 400px; width: 100%;"></div></div>
                 <div class="chart-container"><div id="breakdownChart" style="height: 400px; width: 100%;"></div></div>
@@ -480,6 +516,241 @@
             new google.visualization.PieChart(breakdownChartDiv).draw(breakdownData, options);
         }
     };
+
+    function normalizeDateOnly(dateString) {
+        if (!dateString) return null;
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return null;
+        d.setHours(0,0,0,0);
+        return d;
+    }
+
+    function scoreByThreshold(value, rules) {
+        for (const rule of rules) {
+            if (value >= rule.min) return rule.score;
+        }
+        return 0;
+    }
+
+    function calculateStaffPerformanceRows(fromDate, toDate) {
+        const from = normalizeDateOnly(fromDate);
+        const to = normalizeDateOnly(toDate);
+        if (!from || !to) return [];
+
+        const filtered = fullData.filter(row => {
+            const d = normalizeDateOnly(row['दिनांक']);
+            return d && d >= from && d <= to && (activeUnit === 'संपूर्ण' || row['युनिट'] === activeUnit);
+        });
+
+        const groups = {};
+        filtered.forEach(row => {
+            const name = row['स्टाफचे नांव'] || 'अज्ञात स्टाफ';
+            const unit = row['युनिट'] || '-';
+            const key = `${unit}__${name}`;
+            if (!groups[key]) {
+                groups[key] = {
+                    staffName: name,
+                    unit,
+                    reportCount: 0,
+                    dateSet: new Set(),
+                    totalRecovery: 0,
+                    onlineRecovery: 0,
+                    offlineRecovery: 0,
+                    totalCashInHand: 0,
+                    maxCashInHand: 0,
+                    highCashDays: 0,
+                    matched: 0,
+                    notMatched: 0,
+                    pending: 0
+                };
+            }
+
+            const g = groups[key];
+            g.reportCount++;
+            if (row['दिनांक']) g.dateSet.add(row['दिनांक']);
+
+            const totalRecovery = safeParseFloat(row['एकूण रिकवरी']);
+            const onlineRecovery = safeParseFloat(row['ऑनलाइन रिकवरी']);
+            const offlineRecovery = safeParseFloat(row['ऑफलाईन रिकवरी']);
+            const cashInHand = safeParseFloat(row['हातावर शिल्लक']);
+            const matchStatus = (row['रिकवरी जुळली?'] || '').trim();
+
+            g.totalRecovery += totalRecovery;
+            g.onlineRecovery += onlineRecovery;
+            g.offlineRecovery += offlineRecovery;
+            g.totalCashInHand += cashInHand;
+            g.maxCashInHand = Math.max(g.maxCashInHand, cashInHand);
+            if (cashInHand > 3000) g.highCashDays++;
+
+            if (matchStatus === 'होय') g.matched++;
+            else if (matchStatus === 'नाही') g.notMatched++;
+            else g.pending++;
+        });
+
+        return Object.values(groups).map(g => {
+            const uniqueDays = g.dateSet.size;
+            const avgCash = g.reportCount ? g.totalCashInHand / g.reportCount : 0;
+            const highCashRatio = g.reportCount ? g.highCashDays / g.reportCount : 0;
+            const onlinePercent = g.totalRecovery > 0 ? (g.onlineRecovery / g.totalRecovery) * 100 : 100;
+
+            // Simple direct 100% scoring. Calendar/report नसलेल्या दिवसांमुळे cut नाही.
+            // फक्त 3 मुद्दे: Cash जास्त दिवस, Report जुळला नाही, Online recovery कमी.
+
+            // 1) हातावर cash जास्त दिवस राहिला का?  Max cut 25%.
+            let cashCut = 0;
+            if (g.highCashDays === 0) cashCut = 0;
+            else if (highCashRatio <= 0.20) cashCut = 5;
+            else if (highCashRatio <= 0.40) cashCut = 10;
+            else if (highCashRatio <= 0.60) cashCut = 15;
+            else cashCut = 20;
+            if (g.maxCashInHand > 20000) cashCut = Math.min(25, cashCut + 5);
+
+            // 2) Recovery/report जुळला नाही किंवा pending आहे का? Max cut 35%.
+            const recoveryMatchCut = Math.min(35, (g.notMatched * 8) + (g.pending * 2));
+
+            // 3) Online recovery कमी आहे का? Max cut 20%.
+            let onlineCut = 0;
+            if (g.totalRecovery <= 0) onlineCut = 0;
+            else if (onlinePercent >= 70) onlineCut = 0;
+            else if (onlinePercent >= 50) onlineCut = 5;
+            else if (onlinePercent >= 30) onlineCut = 10;
+            else if (onlinePercent >= 10) onlineCut = 15;
+            else onlineCut = 20;
+
+            const totalCut = Math.min(100, cashCut + recoveryMatchCut + onlineCut);
+            const finalScore = Math.max(0, 100 - totalCut);
+
+            const deductionParts = [];
+            if (cashCut > 0) {
+                deductionParts.push(`हातावर cash मुळे ${cashCut.toFixed(1)}% कमी: ${g.reportCount} actual report entries पैकी ${g.highCashDays} वेळा ₹3,000 पेक्षा जास्त cash हातावर राहिला. Average cash ${formatCurrency(avgCash)}, maximum cash ${formatCurrency(g.maxCashInHand)}.`);
+            }
+            if (recoveryMatchCut > 0) {
+                deductionParts.push(`Report/recovery जुळणीमुळे ${recoveryMatchCut.toFixed(1)}% कमी: 'नाही जुळली' ${g.notMatched} entry आणि pending/update नसलेल्या ${g.pending} entry आहेत.`);
+            }
+            if (onlineCut > 0) {
+                deductionParts.push(`Online recovery कमी असल्यामुळे ${onlineCut.toFixed(1)}% कमी: एकूण recovery ${formatCurrency(g.totalRecovery)} पैकी online recovery ${formatCurrency(g.onlineRecovery)} आहे, म्हणजे ${onlinePercent.toFixed(1)}%. अपेक्षित किमान 70% online recovery ठेवली आहे.`);
+            }
+            if (deductionParts.length === 0) {
+                deductionParts.push(`काहीही cut नाही: cash control चांगला आहे, report/recovery जुळलेली आहे आणि online recovery ${onlinePercent.toFixed(1)}% आहे.`);
+            }
+
+            let remark = `Score ${finalScore.toFixed(1)}% आहे. `;
+            remark += finalScore >= 90 ? 'PP Eligible. ' : 'No PP. ';
+            remark += `कमी होण्याची कारणे फक्त 3 मुद्द्यांवर तपासली आहेत: ${deductionParts.join(' ')}`;
+            remark += ` निवडलेल्या date range मध्ये report नसलेले दिवस scoring मध्ये धरलेले नाहीत; फक्त ${g.reportCount} actual recovery/report entries वर मूल्यांकन केले आहे.`;
+
+            return {
+                ...g,
+                uniqueDays,
+                avgCash,
+                highCashRatio,
+                onlinePercent,
+                cashCut,
+                recoveryMatchCut,
+                onlineCut,
+                totalCut,
+                finalScore,
+                deductionDetails: deductionParts.join(' | '),
+                eligibility: finalScore >= 90 ? 'PP Eligible' : 'No PP',
+                remark
+            };
+        }).sort((a,b) => b.finalScore - a.finalScore);
+    }
+
+    function scoreBadge(score) {
+        const cls = score >= 90 ? 'score-good' : score >= 70 ? 'score-mid' : 'score-bad';
+        return `<span class="score-badge ${cls}">${score.toFixed(1)}%</span>`;
+    }
+
+    function renderStaffPerformanceReport() {
+        const fromDate = document.getElementById('perfFromDate').value;
+        const toDate = document.getElementById('perfToDate').value;
+        const section = document.getElementById('staffPerformanceSection');
+        if (!fromDate || !toDate) {
+            alert('कृपया From आणि To दोन्ही तारीख निवडा.');
+            return;
+        }
+        if (new Date(fromDate) > new Date(toDate)) {
+            alert('From date ही To date पेक्षा पुढची नसावी.');
+            return;
+        }
+
+        staffPerformanceData = calculateStaffPerformanceRows(fromDate, toDate);
+        section.style.display = 'block';
+        if (staffPerformanceData.length === 0) {
+            section.innerHTML = `<div class="table-wrapper"><h2>Staff Performance / PP Eligibility Report</h2><div class="loader">या date range मध्ये डेटा उपलब्ध नाही.</div></div>`;
+            section.scrollIntoView({behavior:'smooth', block:'start'});
+            return;
+        }
+
+        const eligibleCount = staffPerformanceData.filter(r => r.finalScore >= 90).length;
+        const noPpCount = staffPerformanceData.length - eligibleCount;
+        const avgScore = staffPerformanceData.reduce((s,r)=>s+r.finalScore,0) / staffPerformanceData.length;
+        const totalRecovery = staffPerformanceData.reduce((s,r)=>s+r.totalRecovery,0);
+        const totalCash = staffPerformanceData.reduce((s,r)=>s+r.totalCashInHand,0);
+
+        let html = `
+            <div class="table-wrapper">
+                <h2>Staff Performance / PP Eligibility Report (${new Date(fromDate).toLocaleDateString('en-GB')} ते ${new Date(toDate).toLocaleDateString('en-GB')}) - ${activeUnit}</h2>
+                <div class="kpi-cards" style="margin-bottom:1rem;">
+                    <div class="kpi-card"><div class="icon" style="color:var(--primary-color); background:#eaf2f8;">👥</div><div class="text"><h3>Total Staff</h3><p>${staffPerformanceData.length}</p></div></div>
+                    <div class="kpi-card"><div class="icon" style="color:var(--success-color); background:#eafaf1;">✅</div><div class="text"><h3>PP Eligible</h3><p>${eligibleCount}</p></div></div>
+                    <div class="kpi-card"><div class="icon" style="color:var(--danger-color); background:#f9ebea;">❌</div><div class="text"><h3>No PP</h3><p>${noPpCount}</p></div></div>
+                    <div class="kpi-card"><div class="icon" style="color:#6f42c1; background:#f5eef8;">📊</div><div class="text"><h3>Average Score</h3><p>${avgScore.toFixed(1)}%</p></div></div>
+                </div>
+                <table id="staffPerformanceTable">
+                    <thead>
+                        <tr>
+                            <th>Staff Name</th><th>Unit</th><th>Actual Reports / Days</th><th>Total Recovery</th><th>Online Recovery</th><th>Online %</th><th>Cash &gt; ₹3,000 Days</th><th>Max Cash</th><th>Not Matched / Pending</th>
+                            <th>Final %</th><th>कमी झालेले %</th><th>3 कारणे clear</th><th>PP Status</th><th>सविस्तर Remark</th>
+                        </tr>
+                    </thead><tbody>`;
+        staffPerformanceData.forEach(r => {
+            const ppClass = r.finalScore >= 90 ? 'pp-eligible' : 'pp-not-eligible';
+            html += `<tr>
+                <td><strong>${r.staffName}</strong></td>
+                <td>${r.unit}</td>
+                <td>${r.reportCount} / ${r.uniqueDays}</td>
+                <td>${formatCurrency(r.totalRecovery)}</td>
+                <td>${formatCurrency(r.onlineRecovery)}</td>
+                <td>${r.onlinePercent.toFixed(1)}%</td>
+                <td>${r.highCashDays}</td>
+                <td>${formatCurrency(r.maxCashInHand)}</td>
+                <td>${r.notMatched} / ${r.pending}</td>
+                <td>${scoreBadge(r.finalScore)}</td>
+                <td><strong>-${r.totalCut.toFixed(1)}%</strong></td>
+                <td style="text-align:left; white-space:normal; min-width:360px;">${r.deductionDetails}</td>
+                <td class="${ppClass}">${r.eligibility}</td>
+                <td style="text-align:left; white-space:normal; min-width:360px;">${r.remark}</td>
+            </tr>`;
+        });
+        html += `</tbody><tfoot><tr><td><strong>एकूण</strong></td><td></td><td></td><td>${formatCurrency(totalRecovery)}</td><td></td><td>${formatCurrency(totalCash / staffPerformanceData.length)}</td><td></td><td colspan="5"></td></tr></tfoot></table>
+                <div class="small-note" style="margin-top:1rem;"><strong>Marking Note:</strong> Score direct 100% वर आहे. 90% किंवा अधिक score असल्यास PP Eligible. Calendar/report नसलेल्या दिवसांमुळे marks cut होत नाहीत. फक्त 3 मुद्द्यांवर cut होईल: (1) हातावर cash जास्त दिवस राहणे, (2) recovery/report जुळला नाही किंवा pending असणे, (3) online recovery कमी असणे.</div>
+            </div>`;
+        section.innerHTML = html;
+        section.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
+    function exportStaffPerformanceCsv() {
+        if (!staffPerformanceData || staffPerformanceData.length === 0) {
+            renderStaffPerformanceReport();
+            if (!staffPerformanceData || staffPerformanceData.length === 0) return;
+        }
+        const headers = ['Staff Name','Unit','Reports','Unique Days','Total Recovery','Online Recovery','Online %','High Cash Days','Max Cash Hand','Not Matched','Pending','Final %','Reduced %','Clear Marathi Reason','PP Status','Detailed Remark'];
+        const rows = staffPerformanceData.map(r => [
+            r.staffName, r.unit, r.reportCount, r.uniqueDays, Math.round(r.totalRecovery), Math.round(r.onlineRecovery), r.onlinePercent.toFixed(1), r.highCashDays, Math.round(r.maxCashInHand), r.notMatched, r.pending,
+            r.finalScore.toFixed(1), r.totalCut.toFixed(1), r.deductionDetails, r.eligibility, r.remark
+        ]);
+        const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `staff_performance_pp_${document.getElementById('perfFromDate').value}_to_${document.getElementById('perfToDate').value}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
 </script>
 </body>
 </html>
